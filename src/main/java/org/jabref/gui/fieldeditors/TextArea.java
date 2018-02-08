@@ -10,10 +10,10 @@ import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 
 import org.jabref.gui.GUIGlobals;
-import org.jabref.gui.util.DefaultTaskExecutor;
+import org.jabref.gui.customjfx.CustomJFXPanel;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An implementation of the FieldEditor backed by a {@link EditorTextArea}.
@@ -21,7 +21,7 @@ import org.apache.commons.logging.LogFactory;
  */
 public class TextArea implements FieldEditor {
 
-    private static final Log LOGGER = LogFactory.getLog(TextArea.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TextArea.class);
 
     private final JFXPanel swingPanel;
 
@@ -36,14 +36,8 @@ public class TextArea implements FieldEditor {
         textArea = new EditorTextArea(content);
         textArea.setPromptText(title);
 
-        swingPanel = new JFXPanel();
+        swingPanel = CustomJFXPanel.wrap(new Scene(textArea));
         swingPanel.setBackground(GUIGlobals.activeBackgroundColor);
-        DefaultTaskExecutor.runInJavaFXThread(
-                () -> {
-                    Scene scene = new Scene(textArea);
-                    swingPanel.setScene(scene);
-                }
-        );
 
 
         /*

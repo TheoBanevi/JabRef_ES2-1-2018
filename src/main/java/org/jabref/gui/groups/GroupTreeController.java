@@ -2,10 +2,11 @@ package org.jabref.gui.groups;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -31,6 +32,7 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 
+import org.jabref.Globals;
 import org.jabref.gui.AbstractController;
 import org.jabref.gui.DialogService;
 import org.jabref.gui.DragAndDropDataFormats;
@@ -40,16 +42,19 @@ import org.jabref.gui.util.RecursiveTreeItem;
 import org.jabref.gui.util.TaskExecutor;
 import org.jabref.gui.util.ViewModelTreeTableCellFactory;
 import org.jabref.logic.l10n.Localization;
+import org.jabref.model.groups.AllEntriesGroup;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.controlsfx.control.textfield.CustomTextField;
 import org.controlsfx.control.textfield.TextFields;
 import org.fxmisc.easybind.EasyBind;
+import org.reactfx.util.FxTimer;
+import org.reactfx.util.Timer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GroupTreeController extends AbstractController<GroupTreeViewModel> {
 
-    private static final Log LOGGER = LogFactory.getLog(GroupTreeController.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GroupTreeController.class);
 
     @FXML private TreeTableView<GroupNodeViewModel> groupTree;
     @FXML private TreeTableColumn<GroupNodeViewModel, GroupNodeViewModel> mainColumn;
@@ -72,27 +77,27 @@ public class GroupTreeController extends AbstractController<GroupTreeViewModel> 
         viewModel = new GroupTreeViewModel(stateManager, dialogService, taskExecutor);
 
         // Set-up groups tree
+        groupTree.setStyle("-fx-font-size: " + Globals.prefs.getFontSizeFX() + "pt;");
         groupTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
         // Set-up bindings
         Consumer<ObservableList<GroupNodeViewModel>> updateSelectedGroups =
                 (newSelectedGroups) -> newSelectedGroups.forEach(this::selectNode);
-        Consumer<List<TreeItem<GroupNodeViewModel>>> updateViewModel =
-                (newSelectedGroups) -> {
-                    if (newSelectedGroups == null) {
-                        viewModel.selectedGroupsProperty().clear();
-                    } else {
-                        viewModel.selectedGroupsProperty().setAll(newSelectedGroups.stream().map(TreeItem::getValue).collect(Collectors.toList()));
-                    }
-                };
+
         BindingsHelper.bindContentBidirectional(
                 groupTree.getSelectionModel().getSelectedItems(),
                 viewModel.selectedGroupsProperty(),
                 updateSelectedGroups,
-                updateViewModel
+                this::updateSelection
         );
 
-        viewModel.filterTextProperty().bind(searchField.textProperty());
+        // We try to to prevent publishing changes in the search field directly to the search task that takes some time
+        // for larger group structures.
+        final Timer searchTask = FxTimer.create(Duration.ofMillis(400), () -> {
+            LOGGER.debug("Run group search " + searchField.getText());
+            viewModel.filterTextProperty().setValue(searchField.textProperty().getValue());
+        });
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> searchTask.restart());
 
         groupTree.rootProperty().bind(
                 EasyBind.map(viewModel.rootGroupProperty(),
@@ -245,6 +250,20 @@ public class GroupTreeController extends AbstractController<GroupTreeViewModel> 
         setupClearButtonField(searchField);
     }
 
+    private void updateSelection(List<TreeItem<GroupNodeViewModel>> newSelectedGroups) {
+        if (newSelectedGroups == null || newSelectedGroups.isEmpty()) {
+            viewModel.selectedGroupsProperty().clear();
+        } else {
+            List<GroupNodeViewModel> list = new ArrayList<>();
+            for (TreeItem<GroupNodeViewModel> model : newSelectedGroups) {
+                if (model != null && model.getValue() != null && !(model.getValue().getGroupNode().getGroup() instanceof AllEntriesGroup)) {
+                    list.add(model.getValue());
+                }
+            }
+            viewModel.selectedGroupsProperty().setAll(list);
+        }
+    }
+
     private void selectNode(GroupNodeViewModel value) {
         getTreeItemByValue(value)
                 .ifPresent(treeItem -> groupTree.getSelectionModel().select(treeItem));
@@ -255,7 +274,7 @@ public class GroupTreeController extends AbstractController<GroupTreeViewModel> 
     }
 
     private Optional<TreeItem<GroupNodeViewModel>> getTreeItemByValue(TreeItem<GroupNodeViewModel> root,
-            GroupNodeViewModel value) {
+                                                                      GroupNodeViewModel value) {
         if (root.getValue().equals(value)) {
             return Optional.of(root);
         }

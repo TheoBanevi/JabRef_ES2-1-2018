@@ -1,19 +1,22 @@
 package org.jabref;
 
 import java.awt.Toolkit;
+import java.util.Optional;
 import java.util.UUID;
 
-import org.jabref.collab.FileUpdateMonitor;
 import org.jabref.gui.GlobalFocusListener;
 import org.jabref.gui.StateManager;
 import org.jabref.gui.keyboard.KeyBindingRepository;
+import org.jabref.gui.util.DefaultFileUpdateMonitor;
 import org.jabref.gui.util.DefaultTaskExecutor;
 import org.jabref.gui.util.TaskExecutor;
+import org.jabref.logic.exporter.ExporterFactory;
 import org.jabref.logic.importer.ImportFormatReader;
 import org.jabref.logic.journals.JournalAbbreviationLoader;
 import org.jabref.logic.protectedterms.ProtectedTermsLoader;
 import org.jabref.logic.remote.server.RemoteListenerServerLifecycle;
 import org.jabref.logic.util.BuildInfo;
+import org.jabref.model.util.FileUpdateMonitor;
 import org.jabref.preferences.JabRefPreferences;
 
 import com.google.common.base.StandardSystemProperty;
@@ -47,18 +50,19 @@ public class Globals {
      * Manager for the state of the GUI.
      */
     public static StateManager stateManager = new StateManager();
+    public static ExporterFactory exportFactory;
     // Key binding preferences
     private static KeyBindingRepository keyBindingRepository;
     // Background tasks
     private static GlobalFocusListener focusListener;
-    private static FileUpdateMonitor fileUpdateMonitor;
+    private static DefaultFileUpdateMonitor fileUpdateMonitor;
     private static TelemetryClient telemetryClient;
 
     private Globals() {
     }
 
     // Key binding preferences
-    public static KeyBindingRepository getKeyPrefs() {
+    public static synchronized KeyBindingRepository getKeyPrefs() {
         if (keyBindingRepository == null) {
             keyBindingRepository = prefs.getKeyBindingRepository();
         }
@@ -70,15 +74,19 @@ public class Globals {
     public static void startBackgroundTasks() {
         Globals.focusListener = new GlobalFocusListener();
 
-        Globals.fileUpdateMonitor = new FileUpdateMonitor();
+        Globals.fileUpdateMonitor = new DefaultFileUpdateMonitor();
         JabRefExecutorService.INSTANCE.executeInterruptableTask(Globals.fileUpdateMonitor, "FileUpdateMonitor");
 
-        startTelemetryClient();
+        if (Globals.prefs.shouldCollectTelemetry()) {
+            startTelemetryClient();
+        }
     }
 
     private static void stopTelemetryClient() {
-        telemetryClient.trackSessionState(SessionState.End);
-        telemetryClient.flush();
+        if (Globals.prefs.shouldCollectTelemetry()) {
+            getTelemetryClient().ifPresent(client -> client.trackSessionState(SessionState.End));
+            getTelemetryClient().ifPresent(client -> client.flush());
+        }
     }
 
     private static void startTelemetryClient() {
@@ -115,7 +123,7 @@ public class Globals {
         stopTelemetryClient();
     }
 
-    public static TelemetryClient getTelemetryClient() {
-        return telemetryClient;
+    public static Optional<TelemetryClient> getTelemetryClient() {
+        return Optional.ofNullable(telemetryClient);
     }
 }

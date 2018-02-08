@@ -32,8 +32,8 @@ import org.jabref.gui.maintable.MainTable;
 import org.jabref.gui.undo.NamedCompound;
 import org.jabref.gui.undo.UndoableFieldChange;
 import org.jabref.gui.undo.UndoableInsertEntry;
+import org.jabref.gui.util.DefaultTaskExecutor;
 import org.jabref.logic.l10n.Localization;
-import org.jabref.logic.layout.LayoutFormatterPreferences;
 import org.jabref.logic.util.io.FileUtil;
 import org.jabref.logic.xmp.XMPUtil;
 import org.jabref.model.database.BibDatabase;
@@ -45,8 +45,8 @@ import org.jabref.preferences.JabRefPreferences;
 
 import com.jgoodies.forms.builder.FormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class holds the functionality of autolinking to a file that's dropped
@@ -62,7 +62,7 @@ import org.apache.commons.logging.LogFactory;
  */
 public class DroppedFileHandler {
 
-    private static final Log LOGGER = LogFactory.getLog(DroppedFileHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DroppedFileHandler.class);
 
     private final JabRefFrame frame;
 
@@ -351,18 +351,15 @@ public class DroppedFileHandler {
         moveRadioButton.setText(Localization.lang("Move file to file directory"));
         renameCheckBox.setText(Localization.lang("Rename file to").concat(": "));
 
-        LayoutFormatterPreferences layoutPrefs = Globals.prefs
-                .getLayoutFormatterPreferences(Globals.journalAbbreviationLoader);
-
         // Determine which name to suggest:
         String targetName = FileUtil.createFileNameFromPattern(database, entry,
-                Globals.prefs.get(JabRefPreferences.IMPORT_FILENAMEPATTERN), layoutPrefs);
+                Globals.prefs.get(JabRefPreferences.IMPORT_FILENAMEPATTERN));
 
         String fileDirPattern = Globals.prefs.get(JabRefPreferences.IMPORT_FILEDIRPATTERN);
 
         String targetDirName = "";
         if (!fileDirPattern.isEmpty()) {
-            targetDirName = FileUtil.createFileNameFromPattern(database, entry, fileDirPattern, layoutPrefs);
+            targetDirName = FileUtil.createDirNameFromPattern(database, entry, fileDirPattern);
         }
 
         if (targetDirName.isEmpty()) {
@@ -453,7 +450,11 @@ public class DroppedFileHandler {
         tm.addEntry(tm.getRowCount(), new FileListEntry("", filename, fileType));
         String newValue = tm.getStringRepresentation();
         UndoableFieldChange edit = new UndoableFieldChange(entry, FieldName.FILE, oldValue.orElse(null), newValue);
-        entry.setField(FieldName.FILE, newValue);
+
+        // make sure that the update runs in the Java FX thread to avoid exception in listeners
+        DefaultTaskExecutor.runInJavaFXThread(() -> {
+            entry.setField(FieldName.FILE, newValue);
+        });
 
         if (edits == null) {
             panel.getUndoManager().addEdit(edit);

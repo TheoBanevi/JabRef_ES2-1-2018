@@ -1,5 +1,6 @@
 package org.jabref.model.entry;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import org.jabref.model.FieldChange;
 import org.jabref.model.database.BibDatabase;
 import org.jabref.model.database.BibDatabaseMode;
 import org.jabref.model.entry.event.EntryEventSource;
+import org.jabref.model.entry.event.FieldAddedOrRemovedEvent;
 import org.jabref.model.entry.event.FieldChangedEvent;
 import org.jabref.model.entry.identifier.DOI;
 import org.jabref.model.strings.LatexToUnicodeAdapter;
@@ -31,8 +33,8 @@ import org.jabref.model.strings.StringUtil;
 
 import com.google.common.base.Strings;
 import com.google.common.eventbus.EventBus;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BibEntry implements Cloneable {
 
@@ -41,7 +43,7 @@ public class BibEntry implements Cloneable {
     public static final String KEY_FIELD = "bibtexkey";
     public static final String DEFAULT_TYPE = "misc";
     protected static final String ID_FIELD = "id";
-    private static final Log LOGGER = LogFactory.getLog(BibEntry.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BibEntry.class);
     private static final Pattern REMOVE_TRAILING_WHITESPACE = Pattern.compile("\\s+$");
     private final SharedBibEntryData sharedBibEntryData;
     /**
@@ -101,16 +103,6 @@ public class BibEntry implements Cloneable {
 
     public Optional<FieldChange> setMonth(Month parsedMonth) {
         return setField(FieldName.MONTH, parsedMonth.getJabRefFormat());
-    }
-
-    public Optional<FieldChange> replaceKeywords(KeywordList keywordsToReplace, Optional<Keyword> newValue,
-            Character keywordDelimiter) {
-        KeywordList keywordList = getKeywords(keywordDelimiter);
-        if (newValue.isPresent()) {
-            keywordList.replaceAll(keywordsToReplace, newValue.get());
-        }
-
-        return putKeywords(keywordList, keywordDelimiter);
     }
 
     /**
@@ -192,8 +184,8 @@ public class BibEntry implements Cloneable {
      *
      * @param newCiteKey The cite key to set. Must not be null; use {@link #clearCiteKey()} to remove the cite key.
      */
-    public void setCiteKey(String newCiteKey) {
-        setField(KEY_FIELD, newCiteKey);
+    public Optional<FieldChange> setCiteKey(String newCiteKey) {
+        return setField(KEY_FIELD, newCiteKey);
     }
 
     public Optional<String> getCiteKeyOptional() {
@@ -214,21 +206,21 @@ public class BibEntry implements Cloneable {
     /**
      * Sets this entry's type.
      */
-    public void setType(EntryType type) {
-        this.setType(type.getName());
+    public Optional<FieldChange> setType(EntryType type) {
+        return this.setType(type.getName());
     }
 
     /**
      * Sets this entry's type.
      */
-    public void setType(String type) {
-        setType(type, EntryEventSource.LOCAL);
+    public Optional<FieldChange> setType(String type) {
+        return setType(type, EntryEventSource.LOCAL);
     }
 
     /**
      * Sets this entry's type.
      */
-    public void setType(String type, EntryEventSource eventSource) {
+    public Optional<FieldChange> setType(String type, EntryEventSource eventSource) {
         String newType;
         if (Strings.isNullOrEmpty(type)) {
             newType = DEFAULT_TYPE;
@@ -236,13 +228,16 @@ public class BibEntry implements Cloneable {
             newType = type;
         }
         String oldType = getField(TYPE_HEADER).orElse(null);
+        if (newType.equals(oldType)) {
+            return Optional.empty();
+        }
 
-        // We set the type before throwing the changeEvent, to enable
-        // the change listener to access the new value if the change
-        // sets off a change in database sorting etc.
         this.type = newType.toLowerCase(Locale.ENGLISH);
         changed = true;
-        eventBus.post(new FieldChangedEvent(this, TYPE_HEADER, newType, oldType, eventSource));
+
+        FieldChange change = new FieldChange(this, TYPE_HEADER, oldType, newType);
+        eventBus.post(new FieldChangedEvent(change, eventSource));
+        return Optional.of(change);
     }
 
     /**
@@ -406,6 +401,7 @@ public class BibEntry implements Cloneable {
         }
 
         String oldValue = getField(fieldName).orElse(null);
+        boolean isNewField = oldValue == null;
         if (value.equals(oldValue)) {
             return Optional.empty();
         }
@@ -420,7 +416,11 @@ public class BibEntry implements Cloneable {
         invalidateFieldCache(fieldName);
 
         FieldChange change = new FieldChange(this, fieldName, oldValue, value);
-        eventBus.post(new FieldChangedEvent(change, eventSource));
+        if (isNewField) {
+            eventBus.post(new FieldAddedOrRemovedEvent(change, eventSource));
+        } else {
+            eventBus.post(new FieldChangedEvent(change, eventSource));
+        }
         return Optional.of(change);
     }
 
@@ -476,7 +476,7 @@ public class BibEntry implements Cloneable {
         invalidateFieldCache(fieldName);
 
         FieldChange change = new FieldChange(this, fieldName, oldValue.get(), null);
-        eventBus.post(new FieldChangedEvent(change, eventSource));
+        eventBus.post(new FieldAddedOrRemovedEvent(change, eventSource));
         return Optional.of(change);
     }
 
@@ -490,7 +490,7 @@ public class BibEntry implements Cloneable {
      *                  argument can be null, meaning that no attempt will be made to follow crossrefs.
      * @return true if all fields are set or could be resolved, false otherwise.
      */
-    public boolean allFieldsPresent(List<String> allFields, BibDatabase database) {
+    public boolean allFieldsPresent(Collection<String> allFields, BibDatabase database) {
 
         for (String field : allFields) {
             String fieldName = toLowerCase(field);
@@ -591,8 +591,8 @@ public class BibEntry implements Cloneable {
      *
      * @return will return the publication date of the entry or null if no year was found.
      */
-    public Optional<String> getPublicationDate() {
-        return getFieldOrAlias(FieldName.DATE);
+    public Optional<Date> getPublicationDate() {
+        return getFieldOrAlias(FieldName.DATE).flatMap(Date::parse);
     }
 
     public String getParsedSerialization() {
@@ -673,11 +673,26 @@ public class BibEntry implements Cloneable {
 
     public KeywordList getKeywords(Character delimiter) {
         Optional<String> keywordsContent = getField(FieldName.KEYWORDS);
-        if (keywordsContent.isPresent()) {
-            return KeywordList.parse(keywordsContent.get(), delimiter);
-        } else {
-            return new KeywordList();
-        }
+        return KeywordList.parse(keywordsContent, delimiter);
+    }
+
+    public KeywordList getResolvedKeywords(Character delimiter, BibDatabase database) {
+        Optional<String> keywordsContent = getResolvedFieldOrAlias(FieldName.KEYWORDS, database);
+        return KeywordList.parse(keywordsContent, delimiter);
+    }
+
+    public Optional<FieldChange> removeKeywords(KeywordList keywordsToRemove, Character keywordDelimiter) {
+        KeywordList keywordList = getKeywords(keywordDelimiter);
+        keywordList.removeAll(keywordsToRemove);
+        return putKeywords(keywordList, keywordDelimiter);
+    }
+
+    public Optional<FieldChange> replaceKeywords(KeywordList keywordsToReplace, Keyword newValue,
+                                                 Character keywordDelimiter) {
+        KeywordList keywordList = getKeywords(keywordDelimiter);
+        keywordList.replaceAll(keywordsToReplace, newValue);
+
+        return putKeywords(keywordList, keywordDelimiter);
     }
 
     public Collection<String> getFieldValues() {
@@ -720,7 +735,7 @@ public class BibEntry implements Cloneable {
             this.eventBus.unregister(object);
         } catch (IllegalArgumentException e) {
             // occurs if the event source has not been registered, should not prevent shutdown
-            LOGGER.debug(e);
+            LOGGER.debug("Problem unregistering", e);
         }
     }
 
@@ -802,13 +817,14 @@ public class BibEntry implements Cloneable {
     /**
      * Gets a list of linked files.
      *
-     * @return the list of linked files, is never null but can be empty
+     * @return the list of linked files, is never null but can be empty.
+     * Changes to the underlying list will have no effect on the entry itself. Use {@link #addFile(LinkedFile)}
      */
     public List<LinkedFile> getFiles() {
         //Extract the path
         Optional<String> oldValue = getField(FieldName.FILE);
         if (!oldValue.isPresent()) {
-            return Collections.emptyList();
+            return new ArrayList<>(); //Return new ArrayList because emptyList is immutable
         }
 
         return FileFieldParser.parse(oldValue.get());
@@ -832,6 +848,10 @@ public class BibEntry implements Cloneable {
         List<LinkedFile> linkedFiles = getFiles();
         linkedFiles.add(file);
         return setFiles(linkedFiles);
+    }
+
+    public ObservableMap<String, String> getFieldsObservable() {
+        return fields;
     }
 
     private interface GetFieldInterface {

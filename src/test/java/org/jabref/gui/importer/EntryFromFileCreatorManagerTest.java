@@ -2,7 +2,6 @@ package org.jabref.gui.importer;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -15,7 +14,8 @@ import org.jabref.logic.importer.ParserResult;
 import org.jabref.logic.importer.fileformat.BibtexParser;
 import org.jabref.model.database.BibDatabase;
 import org.jabref.model.entry.BibEntry;
-import org.jabref.testutils.category.GUITests;
+import org.jabref.model.util.DummyFileUpdateMonitor;
+import org.jabref.testutils.category.GUITest;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,7 +25,7 @@ import org.junit.experimental.categories.Category;
 
 import static org.mockito.Mockito.mock;
 
-@Category(GUITests.class)
+@Category(GUITest.class)
 public class EntryFromFileCreatorManagerTest {
 
     // Needed to initialize ExternalFileTypes
@@ -47,10 +47,10 @@ public class EntryFromFileCreatorManagerTest {
 
     @Test
     @Ignore
-    public void testAddEntrysFromFiles() throws FileNotFoundException, IOException {
+    public void testAddEntrysFromFiles() throws IOException {
         try (FileInputStream stream = new FileInputStream(ImportDataTest.UNLINKED_FILES_TEST_BIB);
                 InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-            ParserResult result = new BibtexParser(mock(ImportFormatPreferences.class)).parse(reader);
+            ParserResult result = new BibtexParser(mock(ImportFormatPreferences.class), new DummyFileUpdateMonitor()).parse(reader);
             BibDatabase database = result.getDatabase();
 
             List<File> files = new ArrayList<>();

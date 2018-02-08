@@ -3,21 +3,26 @@ package org.jabref.logic.util.io;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Stack;
 import java.util.Vector;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.jabref.logic.bibtexkeypattern.BracketedPattern;
 import org.jabref.logic.layout.Layout;
 import org.jabref.logic.layout.LayoutFormatterPreferences;
 import org.jabref.logic.layout.LayoutHelper;
@@ -25,31 +30,70 @@ import org.jabref.model.database.BibDatabase;
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.util.OptionalUtil;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FileUtil {
+
     public static final boolean IS_POSIX_COMPILANT = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
-    private static final Log LOGGER = LogFactory.getLog(FileUtil.class);
+    public static final int MAXIMUM_FILE_NAME_LENGTH = 255;
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
 
     private FileUtil() {
     }
 
     /**
-     * Returns the name part of a file name (i.e., everything in front of last ".").
+     * Returns the extension of a file name or Optional.empty() if the file does not have one (no "." in name).
+     *
+     * @return The extension (without leading dot), trimmed and in lowercase.
      */
-    public static String getFileName(String fileNameWithExtension) {
-        int dotPosition = fileNameWithExtension.lastIndexOf('.');
-        if (dotPosition >= 0) {
-            return fileNameWithExtension.substring(0, dotPosition);
+    public static Optional<String> getFileExtension(String fileName) {
+        int dotPosition = fileName.lastIndexOf('.');
+        if ((dotPosition > 0) && (dotPosition < (fileName.length() - 1))) {
+            return Optional.of(fileName.substring(dotPosition + 1).trim().toLowerCase(Locale.ROOT));
         } else {
-            return fileNameWithExtension;
+            return Optional.empty();
         }
     }
 
     /**
-     * Adds an extension to the given file name. The original extension is not replaced. That means,
-     * "demo.bib", ".sav" gets "demo.bib.sav" and not "demo.sav"
+     * Returns the extension of a file or Optional.empty() if the file does not have one (no . in name).
+     *
+     * @return The extension, trimmed and in lowercase.
+     */
+    public static Optional<String> getFileExtension(File file) {
+        return getFileExtension(file.getName());
+    }
+
+    /**
+     * Returns the name part of a file name (i.e., everything in front of last ".").
+     */
+    public static String getBaseName(String fileNameWithExtension) {
+        return FilenameUtils.getBaseName(fileNameWithExtension);
+    }
+
+    /**
+     * Returns a valid filename for most operating systems.
+     *
+     * Currently, only the length is restricted to 255 chars, see MAXIMUM_FILE_NAME_LENGTH.
+     */
+    public static String getValidFileName(String fileName) {
+        String nameWithoutExtension = getBaseName(fileName);
+
+        if (nameWithoutExtension.length() > MAXIMUM_FILE_NAME_LENGTH) {
+            Optional<String> extension = getFileExtension(fileName);
+            String shortName = nameWithoutExtension.substring(0, MAXIMUM_FILE_NAME_LENGTH);
+            LOGGER.info(String.format("Truncated the too long filename '%s' (%d characters) to '%s'.", fileName, fileName.length(), shortName));
+            return extension.map(s -> shortName + "." + s).orElse(shortName);
+        }
+
+        return fileName;
+    }
+
+    /**
+     * Adds an extension to the given file name. The original extension is not replaced. That means, "demo.bib", ".sav"
+     * gets "demo.bib.sav" and not "demo.sav"
      *
      * @param path      the path to add the extension to
      * @param extension the extension to add
@@ -120,7 +164,10 @@ public class FileUtil {
             return false;
         }
         try {
-            return Files.copy(pathToSourceFile, pathToDestinationFile, StandardCopyOption.REPLACE_EXISTING) != null;
+            // Preserve Hard Links with OpenOption defaults included for clarity
+            Files.write(pathToDestinationFile, Files.readAllBytes(pathToSourceFile),
+                    StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+            return true;
         } catch (IOException e) {
             LOGGER.error("Copying Files failed.", e);
             return false;
@@ -148,24 +195,27 @@ public class FileUtil {
      */
     public static boolean renameFile(Path fromFile, Path toFile, boolean replaceExisting) {
         try {
-            if (replaceExisting) {
-                return Files.move(fromFile, fromFile.resolveSibling(toFile),
-                        StandardCopyOption.REPLACE_EXISTING) != null;
-            } else {
-                return Files.move(fromFile, fromFile.resolveSibling(toFile)) != null;
-            }
+            return renameFileWithException(fromFile, toFile, replaceExisting);
         } catch (IOException e) {
             LOGGER.error("Renaming Files failed", e);
             return false;
         }
     }
 
+    public static boolean renameFileWithException(Path fromFile, Path toFile, boolean replaceExisting) throws IOException {
+        if (replaceExisting) {
+            return Files.move(fromFile, fromFile.resolveSibling(toFile),
+                    StandardCopyOption.REPLACE_EXISTING) != null;
+        } else {
+            return Files.move(fromFile, fromFile.resolveSibling(toFile)) != null;
+        }
+    }
+
     /**
-     * Converts an absolute file to a relative one, if possible.
-     * Returns the parameter file itself if no shortening is possible
+     * Converts an absolute file to a relative one, if possible. Returns the parameter file itself if no shortening is
+     * possible.
      * <p>
-     * This method works correctly only if dirs are sorted decent in their length
-     * i.e. /home/user/literature/important before /home/user/literature
+     * This method works correctly only if dirs are sorted decent in their length i.e. /home/user/literature/important before /home/user/literature.
      *
      * @param file the file to be shortened
      * @param dirs directories to check
@@ -208,7 +258,9 @@ public class FileUtil {
      * @param fileNamePattern the filename pattern
      * @param prefs           the layout preferences
      * @return a suggested fileName
+     * @Deprecated use String createFileNameFromPattern(BibDatabase database, BibEntry entry, String fileNamePattern ) instead.
      */
+    @Deprecated
     public static String createFileNameFromPattern(BibDatabase database, BibEntry entry, String fileNamePattern,
                                                    LayoutFormatterPreferences prefs) {
         String targetName = null;
@@ -233,28 +285,68 @@ public class FileUtil {
     }
 
     /**
-     * Finds a file inside a directory structure.
-     * Will also look for the file inside nested directories.
+     * Determines filename provided by an entry in a database
+     *
+     * @param database        the database, where the entry is located
+     * @param entry           the entry to which the file should be linked to
+     * @param fileNamePattern the filename pattern
+     * @return a suggested fileName
+     */
+    public static String createFileNameFromPattern(BibDatabase database, BibEntry entry, String fileNamePattern) {
+        String targetName = BracketedPattern.expandBrackets(fileNamePattern, ';', entry, database);
+
+        if ((targetName == null) || targetName.isEmpty()) {
+            targetName = entry.getCiteKeyOptional().orElse("default");
+        }
+
+        //Removes illegal characters from filename
+        targetName = FileNameCleaner.cleanFileName(targetName);
+        return targetName;
+    }
+
+    /**
+     * Determines filename provided by an entry in a database
+     *
+     * @param database        the database, where the entry is located
+     * @param entry           the entry to which the file should be linked to
+     * @param fileNamePattern the filename pattern
+     * @return a suggested fileName
+     */
+    public static String createDirNameFromPattern(BibDatabase database, BibEntry entry, String fileNamePattern) {
+        String targetName = null;
+
+        targetName = BracketedPattern.expandBrackets(fileNamePattern, ';', entry, database);
+
+        if ((targetName == null) || targetName.isEmpty()) {
+            targetName = entry.getCiteKeyOptional().orElse("default");
+        }
+
+        //Removes illegal characters from filename
+        targetName = FileNameCleaner.cleanDirectoryName(targetName);
+        return targetName;
+    }
+
+    /**
+     * Finds a file inside a directory structure. Will also look for the file inside nested directories.
      *
      * @param filename      the name of the file that should be found
      * @param rootDirectory the rootDirectory that will be searched
      * @return the path to the first file that matches the defined conditions
      */
     public static Optional<Path> find(String filename, Path rootDirectory) {
-        try {
-            return Files.walk(rootDirectory)
+        try (Stream<Path> pathStream = Files.walk(rootDirectory)) {
+            return pathStream
                     .filter(Files::isRegularFile)
                     .filter(f -> f.getFileName().toString().equals(filename))
                     .findFirst();
-        } catch (IOException ex) {
+        } catch (UncheckedIOException | IOException ex) {
             LOGGER.error("Error trying to locate the file " + filename + " inside the directory " + rootDirectory);
         }
         return Optional.empty();
     }
 
     /**
-     * Finds a file inside a list of directory structures.
-     * Will also look for the file inside nested directories.
+     * Finds a file inside a list of directory structures. Will also look for the file inside nested directories.
      *
      * @param filename    the name of the file that should be found
      * @param directories the directories that will be searched
@@ -266,5 +358,14 @@ public class FileUtil {
             FileUtil.find(filename, dir).ifPresent(files::add);
         }
         return files;
+    }
+
+    /**
+     * Creates a string representation of the given path that should work on all systems.
+     * This method should be used when a path needs to be stored in the bib file or preferences.
+     */
+    public static String toPortableString(Path path) {
+        return path.toString()
+                   .replace('\\', '/');
     }
 }
