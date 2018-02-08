@@ -10,11 +10,9 @@ jobs:
             - install4j-cache
       - checkout
       - run: scripts/prepare-install4j.sh
-      # update locally with:
-      # openssl aes-256-cbc -e -in ./buildres/jabref-cert-2016.p12 -out jabref-cert-2016.p12.enc -k {PASSWORD}
-      - run: install4j6/bin/install4jc --verbose --license=$INSTALL4J_KEY --win-keystore-password $CERTIFICATE_PW --mac-keystore-password $CERTIFICATE_PW
-      - run: openssl aes-256-cbc -d -in ./buildres/jabref-cert-2016.p12.enc -out ./buildres/jabref-cert-2016.p12 -k $CERTIFICATE
-      - run: ./gradlew -Pdev=true -Pinstall4jDir="install4j6" release --stacktrace
+      - scripts/prepare-install4j.sh
+      - install4j7/bin/install4jc --verbose --license=$INSTALL4J_KEY
+      - run: ./gradlew -Pdev=true -Pinstall4jDir="install4j7" release --stacktrace
       - save_cache:
           key: dependency-cache
           paths:
@@ -23,7 +21,7 @@ jobs:
           key: install4j-cache
           paths:
             - "~/downloads"
-            - "~/.install4j6"
+            - "~/.install4j7"
       - store_artifacts:
           path: build/releases
           destination: build
