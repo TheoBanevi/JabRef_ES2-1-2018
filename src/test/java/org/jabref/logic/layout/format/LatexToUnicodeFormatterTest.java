@@ -31,7 +31,6 @@ public class LatexToUnicodeFormatterTest {
         assertEquals("\uD835\uDC61\uD835\uDC52\uD835\uDC65\uD835\uDC61", formatter.format("\\textit{text}"));
     }
 
-
     @Test
     public void testEscapedDollarSign() {
         assertEquals("$", formatter.format("\\$"));
@@ -75,7 +74,6 @@ public class LatexToUnicodeFormatterTest {
         assertEquals("ı̈", formatter.format("\\\"{\\i}"));
     }
 
-
     @Test
     public void testIWithDiaresisAndUnnecessaryBraces() {
         assertEquals("ï", formatter.format("{\\\"{i}}"));
@@ -90,7 +88,6 @@ public class LatexToUnicodeFormatterTest {
     public void testPolishName() {
         assertEquals("Łęski", formatter.format("\\L\\k{e}ski"));
     }
-
 
     @Test
     public void testDoubleCombiningAccents() {
@@ -189,6 +186,11 @@ public class LatexToUnicodeFormatterTest {
     @Test
     public void testConversionOfOrdinal9th() {
         assertEquals("9ᵗʰ", formatter.format("9\\textsuperscript{th}"));
+    }
+
+    @Test
+    public void testConversionOfAuthorsWithAccentsInLatex() {
+        assertEquals("Patrik Španěl and Kseniya Dryahina and David Smith", formatter.format("Patrik {\\v{S}}pan{\\v{e}}l and Kseniya Dryahina and David Smith"));
     }
 
 }

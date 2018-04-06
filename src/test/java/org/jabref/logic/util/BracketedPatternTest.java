@@ -200,6 +200,48 @@ public class BracketedPatternTest {
     }
 
     @Test
+    public void testAuthlAndLatex2Unicode() {
+        Character separator = ';';
+        String pattern = "[auth:latex_to_unicode]";
+
+        BibDatabase database = new BibDatabase();
+        BibEntry entry = new BibEntry();
+        entry.setField("author", "Patrik {\\v{S}}pan{\\v{e}}l and Kseniya Dryahina and David Smith");
+        database.insertEntries(entry);
+
+        assertEquals("Spanel", BracketedPattern.expandBrackets(pattern, separator, entry, database));
+
+    }
+
+    @Test
+    public void testAuthorsSghortAndLatex2Unicode() {
+        Character separator = ';';
+        String pattern = "[authshort:latex_to_unicode]";
+
+        BibDatabase database = new BibDatabase();
+        BibEntry entry = new BibEntry();
+        entry.setField("author", "Patrik {\\v{S}}pan{\\v{e}}l and Kseniya Dryahina and David Smith");
+        database.insertEntries(entry);
+
+        assertEquals("SDS", BracketedPattern.expandBrackets(pattern, separator, entry, database));
+
+    }
+
+    @Test
+    public void testAuthEtAlAndLatex2Unicode() {
+        Character separator = ';';
+        String pattern = "[authEtAl:latex_to_unicode]";
+
+        BibDatabase database = new BibDatabase();
+        BibEntry entry = new BibEntry();
+        entry.setField("author", "Patrik {\\v{S}}pan{\\v{e}}l and Kseniya Dryahina and David Smith");
+        database.insertEntries(entry);
+        //breaks
+        assertEquals("SpanelEtAl", BracketedPattern.expandBrackets(pattern, separator, entry, database));
+
+    }
+
+    @Test
     public void lowerFormatterWorksOnVonNamePrefixes() {
         Character separator = ';';
         assertEquals("eric von hippel and georg von krogh",
@@ -240,4 +282,5 @@ public class BracketedPatternTest {
 
         assertEquals("", BracketedPattern.expandBrackets("[author]", ';', child, database));
     }
+
 }

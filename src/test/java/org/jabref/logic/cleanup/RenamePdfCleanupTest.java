@@ -149,4 +149,27 @@ public class RenamePdfCleanupTest {
         assertEquals("Toot - test title.pdf", cleanup.getTargetFileName(fileField, entry));
     }
 
+    @Test
+    public void cleanupRenamePdfBibtexkeyAndShorttitleLatex2Unicode() throws IOException {
+        String fileNamePattern = "[bibtexkey] - [shorttitle:latex_to_unicode]";
+
+        File tempFile = testFolder.newFile("Toot.pdf");
+        LinkedFile fileField = new LinkedFile("", tempFile.getAbsolutePath(), "");
+        entry.setField("file", FileFieldWriter.getStringRepresentation(fileField));
+        entry.setField("author", "Patrik {\\v{S}}pan{\\v{e}}l and Kseniya Dryahina and David Smith");
+        entry.setField("title", "A quantitative study of the influence of inhaled compounds on their concentrations in exhaled breath");
+        entry.setField("journal", "Journal of Breath Research");
+        entry.setField("year", "2013");
+        entry.setField("volume", "7");
+        entry.setField("number", "1");
+        entry.setField("publisher", "{IOP} Publishing");
+
+        RenamePdfCleanup cleanup = new RenamePdfCleanup(false, context, fileNamePattern,
+                mock(LayoutFormatterPreferences.class), fileDirPrefs);
+        cleanup.cleanup(entry);
+
+        LinkedFile newFileField = new LinkedFile("", "Toot - A quantitative study.pdf", "");
+        assertEquals(Optional.of(FileFieldWriter.getStringRepresentation(newFileField)), entry.getField("file"));
+    }
+
 }
