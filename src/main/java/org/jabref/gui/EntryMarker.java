@@ -65,6 +65,7 @@ public class EntryMarker {
 
     /**
      * SIDE EFFECT: Unselects given entry
+     * @param onlyMaxLevel if only one level of marking should be used, i.e., boolean marking
      */
     public static void unmarkEntry(BibEntry be, boolean onlyMaxLevel, BibDatabase database, NamedCompound ce) {
         if (be.hasField(FieldName.MARKED_INTERNAL)) {
