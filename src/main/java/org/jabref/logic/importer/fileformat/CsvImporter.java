@@ -13,7 +13,6 @@ import java.util.Objects;
 import org.jabref.logic.importer.Importer;
 import org.jabref.logic.importer.ParserResult;
 import org.jabref.logic.util.FileType;
-
 /**
  * Object with data for a csv importer.
  *
@@ -26,9 +25,10 @@ public class CsvImporter extends Importer {
 
     private Importer importer;
 
-    public CsvImporterImporter(String basePath, String className) throws ClassNotFoundException {
-    	
+    public void CsvImporterImporter(String basePath, String className) throws ClassNotFoundException {
+
         this.basePath = Paths.get(basePath);
+
         this.className = className;
         try {
             importer = load(this.basePath.toUri().toURL(), this.className);
@@ -44,17 +44,18 @@ public class CsvImporter extends Importer {
             return (Importer) clazz.newInstance();
         }
     }
-    
+
     @Override
-    public boolean isRecognizedFormat(BufferedReader input) throws IOException{
-    	try {
+    public boolean isRecognizedFormat(BufferedReader input) throws IOException {
+
         	if(className != "csv") {
-        		return false;
-        	}
-    		return true;
-    	}
+                return false;
+            }
+        	else {
+                return true;
+            }
     }
-    
+
 
     public List<String> getAsStringList() {
         return Arrays.asList(basePath.toString().replace('\\', '/'), className);
