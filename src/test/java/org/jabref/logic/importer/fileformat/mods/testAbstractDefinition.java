@@ -9,7 +9,7 @@ import org.junit.Test;;
 class testAbstractDefinition {
 
 	@Test
-	public void validateSetDisplayLabel() {
+	public void validateSetDisplayLabel() throws NoSuchFieldException, IllegalAccessException{
 		AbstractDefinition ad = new AbstractDefinition();
 		ad.setDisplayLabel("Testando");
 		final Field field = ad.getClass().getDeclaredField("displayLabel");
@@ -18,12 +18,12 @@ class testAbstractDefinition {
 	}
 	
 	@Test
-	public void validateSetDisplayLabel() {
+	public void validateGetDisplayLabel() throws NoSuchFieldException, IllegalAccessException{
 		AbstractDefinition ad = new AbstractDefinition();
 		final Field field = ad.getClass().getDeclaredField("displayLabel");
 		field.setAccessible(true);
 		ad.setDisplayLabel("Testando");
-		String resultado = ad.getValue();
+		String resultado = ad.getDisplayLabel();
 		assertEquals(resultado, "Testando");
 	}
 
