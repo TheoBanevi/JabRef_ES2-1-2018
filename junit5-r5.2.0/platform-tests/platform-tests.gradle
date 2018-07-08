@@ -1,0 +1,90 @@
+plugins {
+	id "me.champeau.gradle.jmh" version "0.4.5"
+}
+
+test {
+	useJUnitPlatform {
+		includeEngines 'junit-jupiter'
+		excludeTags 'exclude'
+	}
+	filter {
+		includeTestsMatching "*Tests"
+	}
+	testLogging {
+		events 'failed'
+	}
+	reports {
+		html.enabled = true
+	}
+	systemProperty 'java.util.logging.manager', 'org.apache.logging.log4j.jul.LogManager'
+	systemProperty 'coverage.enabled', project.hasProperty('enableClover') ? 'true' : 'false'
+}
+
+// Tests in `AutomaticModuleNameTests` depend on all and the three jars. #894
+test.dependsOn(
+	project(':junit-jupiter-migrationsupport').jar,
+	project(':junit-platform-gradle-plugin').jar,
+	project(':junit-platform-surefire-provider').jar
+)
+
+dependencies {
+	// --- Things we are testing --------------------------------------------------
+	testImplementation(project(':junit-platform-commons'))
+	testImplementation(project(':junit-platform-console'))
+	testImplementation(project(':junit-platform-engine'))
+	testImplementation(project(':junit-platform-launcher'))
+
+	// --- Things we are testing with ---------------------------------------------
+	testImplementation(project(':junit-jupiter-api'))
+	testImplementation(project(':junit-jupiter-params'))
+	testImplementation(project(':junit-platform-runner'))
+	testImplementation(project(path: ':junit-platform-engine', configuration: 'testArtifacts'))
+	testImplementation(project(path: ':junit-jupiter-engine', configuration: 'testArtifacts'))
+	testImplementation("org.apiguardian:apiguardian-api:${apiGuardianVersion}")
+	testImplementation("org.assertj:assertj-core:${assertJVersion}")
+	testImplementation("org.mockito:mockito-junit-jupiter:${mockitoVersion}") {
+		exclude group: 'org.junit.jupiter', module: 'junit-jupiter-engine'
+	}
+
+	// --- Test run-time dependencies ---------------------------------------------
+	testRuntimeOnly(project(':junit-jupiter-engine'))
+	testRuntimeOnly(project(':junit-vintage-engine'))
+	testRuntimeOnly("org.apache.logging.log4j:log4j-core:${log4jVersion}")
+	testRuntimeOnly("org.apache.logging.log4j:log4j-jul:${log4jVersion}")
+	testRuntimeOnly('org.codehaus.groovy:groovy-jsr223:' + GroovySystem.getVersion()) {
+		because 'Tests annotated with @EnabledIf(engine = "groovy", ...) need it.'
+	}
+
+	// --- http://openjdk.java.net/projects/code-tools/jmh/ -----------------------
+	jmh("org.openjdk.jmh:jmh-core:${jmhVersion}") {
+		exclude group: 'net.sf.jopt-simple', module: 'jopt-simple'
+	}
+	jmhAnnotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:${jmhVersion}")
+	jmh(project(':junit-jupiter-api'))
+	jmh("junit:junit:${junit4Version}")
+}
+
+jmh {
+	jmhVersion = "${jmhVersion}"
+
+	duplicateClassesStrategy = DuplicatesStrategy.WARN
+	fork = 0 // Too long command line on Windows...
+	warmupIterations = 1
+	iterations = 5
+}
+
+checkstyleJmh { // use same style rules as defined for tests
+	configFile = rootProject.file('src/checkstyle/checkstyleTest.xml')
+}
+
+eclipse {
+	classpath {
+		plusConfigurations += [ project(':junit-platform-console').configurations.shadowed ]
+	}
+}
+
+idea {
+	module {
+		scopes.PROVIDED.plus += [ project(':junit-platform-console').configurations.shadowed ]
+	}
+}
