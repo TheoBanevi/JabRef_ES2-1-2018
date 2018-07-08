@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 import org.jabref.logic.l10n.Localization;
 import org.jabref.model.strings.StringUtil;
 
-public class YearChecker implements ValueChecker {
+public class                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    YearChecker implements ValueChecker {
 
     private static final Predicate<String> CONTAINS_FOUR_DIGIT = Pattern.compile("([^0-9]|^)[0-9]{4}([^0-9]|$)")
             .asPredicate();
@@ -23,6 +23,25 @@ public class YearChecker implements ValueChecker {
      */
     @Override
     public Optional<String> checkValue(String value) {
+
+        Calendar c = Calendar.getInstance();
+
+        int year = Integer.parseInt(value);
+
+        //Verificações do campo value e se valor do ano de argumento
+    	if ((year <= c.get(Calendar.YEAR)) && (year > 0) ) {
+    		if ((value != null) && !value.equals("")) {
+    			c.set(Calendar.YEAR, year);
+    			try {
+    				c.get(Calendar.YEAR);
+
+    			} catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+    				return Optional.of(Localization.lang("Invalid year. Please, try again"));
+    			}
+    		}
+    	}
+
+
         if (StringUtil.isBlank(value)) {
             return Optional.empty();
         }
