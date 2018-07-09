@@ -14,18 +14,18 @@ class LocationDefinitionTest {
         ld.setDisplayLabel("DisplayTest"); //SET METODO
         final Field field = ld.getClass().getDeclaredField("displayLabel"); //NOME DO ATRIBUTO
         field.setAccessible(true);
-        assertEquals(field.get(ld), "DisplayTest"); //COMPARAR COM O NOME SETINICIAISCLASSEO
+        assertEquals(field.get(ld), "DisplayTest");
     }
 
 
     @Test
     public void validateGetDisplayLabel() throws NoSuchFieldException, IllegalAccessException{ //VALIDATEMETODO (GET)
         LocationDefinition ld = new LocationDefinition(); //INSTANCIA OBJ DA CLASSE
-        final Field field = ld.getClass().getDeclaredField("NAMEATRIBUTO"); //NOME DO ATRIBUTO
+        final Field field = ld.getClass().getDeclaredField("displayLabel"); //NOME DO ATRIBUTO
         field.setAccessible(true);
         ld.setDisplayLabel("NOMETESTAR"); //SET METODO
         String resultado = ld.getDisplayLabel(); //GET DO METODO
-        assertEquals(resultado, "NOMETESTAR"); //COMPARAR COM O NOME OBTIDO NO GET
+        assertEquals(resultado, "NOMETESTAR");
     }
 
 }
