@@ -1,0 +1,59 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+
+description = 'JUnit Platform Console'
+
+buildscript {
+	repositories {
+		jcenter()
+	}
+	dependencies {
+		classpath("com.github.jengelman.gradle.plugins:shadow:${shadowVersion}")
+	}
+}
+
+dependencies {
+	api(project(':junit-platform-launcher'))
+
+	shadowed('net.sf.jopt-simple:jopt-simple:5.0.4')
+}
+
+jar {
+	manifest {
+		attributes(
+			'Main-Class': 'org.junit.platform.console.ConsoleLauncher',
+			'Automatic-Module-Name': 'org.junit.platform.console'
+		)
+	}
+}
+
+jar.enabled = false
+jar.dependsOn shadowJar
+
+shadowJar {
+	// Generate shadow jar only if the underlying manifest was regenerated.
+	// See https://github.com/junit-team/junit5/issues/631
+	onlyIf {
+		(project.generateManifest || !shadowJar.archivePath.exists())
+	}
+	classifier = null
+	configurations = [project.configurations.shadowed]
+	exclude 'META-INF/**'
+	relocate 'joptsimple', 'org.junit.platform.console.shadow.joptsimple'
+	transform(com.github.jengelman.gradle.plugins.shadow.transformers.PropertiesFileTransformer) {
+		paths = [
+			'joptsimple/ExceptionMessages.properties',
+			'joptsimple/HelpFormatterMessages.properties'
+		]
+		keyTransformer = { key ->
+			key.replaceAll('^(joptsimple\\..*)$', 'org.junit.platform.console.shadow.$1')
+		}
+	}
+	from(projectDir) {
+		include 'LICENSE-jopt-simple.md'
+		into 'META-INF'
+	}
+}
+
+artifacts {
+	archives shadowJar
+}
