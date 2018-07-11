@@ -24,7 +24,7 @@ class testGenreDefinition { //TESTCLASSE
 		GenreDefinition gd = new GenreDefinition(); //INSTANCIA OBJ DA CLASSE
 		final Field field = gd.getClass().getDeclaredField("type"); //NOME DO ATRIBUTO
 		field.setAccessible(true);
-		gd.setType"Tipo"); //SET METODO
+		gd.setType("Tipo"); //SET METODO
 		String resultado = gd.getType(); //GET DO METODO
 		assertEquals(resultado, "Tipo"); //COMPARAR COM O NOME OBTIDO NO GET
 	}
