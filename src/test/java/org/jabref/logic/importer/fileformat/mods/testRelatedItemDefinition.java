@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Field;
 
-import org.junit.Test;;
+import org.junit.jupiter.api.Test;
+
+
 
 
 class testRelatedItemDefinition { //TESTCLASSE
@@ -32,7 +34,7 @@ class testRelatedItemDefinition { //TESTCLASSE
 	public void validateGetType2() throws NoSuchFieldException, IllegalAccessException{ //VALIDATEMETODO (SET)
 		RelatedItemDefinition id = new RelatedItemDefinition(); //INSTANCIA OBJ DA CLASSE
 		String valorAnterior = id.getType();
-		id.setType(Null); //SET METODO
+		id.setType(null); //SET METODO
 		String resultado = id.getType(); //GET DO METODO
 		assertEquals(resultado, "simple"); //COMPARAR COM O NOME OBTIDO NO GET
 	}

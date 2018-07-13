@@ -1,4 +1,12 @@
-import static org.junit.jupiter.api.Assertions.*;
+
+package org.jabref.logic.importer.fileformat.mods;
+
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.lang.reflect.Field;
+
+import org.junit.jupiter.api.Test;
 
 public class StringPlusLanguageTest { //TESTCLASSE
 

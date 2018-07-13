@@ -1,4 +1,9 @@
+package org.jabref.logic.importer.fileformat.mods;
 import static org.junit.jupiter.api.Assertions.*;
+
+import java.lang.reflect.Field;
+
+import org.junit.jupiter.api.Test;
 
 class UrlDefinitionTest { //TESTCLASSE
 
@@ -6,7 +11,7 @@ class UrlDefinitionTest { //TESTCLASSE
 	public void validateSetDisplayLabel() throws NoSuchFieldException, IllegalAccessException{ //VALIDATEMETODO (SET)
 		UrlDefinition ur = new UrlDefinition(); //INSTANCIA OBJ DA CLASSE
 		ur.setDisplayLabel("DisplayLabelTest"); //SET METODO
-		final Field field = t.getClass().getDeclaredField("displayLabel"); //NOME DO ATRIBUTO
+		final Field field = ur.getClass().getDeclaredField("displayLabel"); //NOME DO ATRIBUTO
 		field.setAccessible(true);
 		assertEquals(field.get(ur), "DisplayLabelTest"); //COMPARAR COM O NOME SETINICIAISCLASSEO
 	}

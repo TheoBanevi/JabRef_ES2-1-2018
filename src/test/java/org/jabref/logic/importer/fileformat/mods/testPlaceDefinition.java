@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Field;
 
-import org.junit.Test;;
+import org.junit.jupiter.api.Test;
+
+
 
 
 class testPlaceDefinition { //TESTCLASSE
@@ -29,7 +31,7 @@ class testPlaceDefinition { //TESTCLASSE
 	@Test
 	public void validateGetSupplied2() throws NoSuchFieldException, IllegalAccessException{ //VALIDATEMETODO (SET)
 		PlaceDefinition id = new PlaceDefinition(); //INSTANCIA OBJ DA CLASSE		String valorAnterior = id.getSupplied();
-		id.setSupplied(Null); //SET METODO
+		id.setSupplied(null); //SET METODO
 		String resultado = id.getSupplied(); //GET DO METODO
 		assertEquals(resultado, "yes"); //COMPARAR COM O NOME OBTIDO NO GET
 	}

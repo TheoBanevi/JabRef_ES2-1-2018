@@ -4,47 +4,20 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.reflect.Field;
 
-import org.junit.Test;;
-
 import java.math.BigInteger;
 
+import org.junit.jupiter.api.Test;
+
 class testExtentDefinition { //TESTCLASSE
-	
-	/*
-	protected StringPlusLanguage start;
-	public StringPlusLanguage getStart() {
-        return start;
-    }
-	public void setStart(StringPlusLanguage value) {
-        this.start = value;
-    }
-	
-	protected StringPlusLanguage end;
-	public StringPlusLanguage getEnd() {
-        return end;
-    }
-	public void setEnd(StringPlusLanguage value) {
-        this.end = value;
-    }
-	
-	protected StringPlusLanguage list;
-	public StringPlusLanguage getList() {
-        return list;
-    }
-	public void setList(StringPlusLanguage value) {
-        this.list = value;
-    }
-	*/
-	
-	
+		
 	@Test
 	public void validateSetTotal() throws NoSuchFieldException, IllegalAccessException{ //VALIDATEMETODO (SET)
 		ExtentDefinition ed = new ExtentDefinition(); //INSTANCIA OBJ DA CLASSE
-		BigInteger big = new BigInteger(10);
+		BigInteger big = new BigInteger("10");
 		ed.setTotal(big); //SET METODO
 		final Field field = ed.getClass().getDeclaredField("total"); //NOME DO ATRIBUTO
 		field.setAccessible(true);
-		assertEquals(field.get(ed).intValue(), 10); //COMPARAR COM O VALOR SETADO
+		assertEquals(field.get(ed), big); //COMPARAR COM O VALOR SETADO
 	}
 	
 	
@@ -53,10 +26,10 @@ class testExtentDefinition { //TESTCLASSE
 		ExtentDefinition ed = new ExtentDefinition(); //INSTANCIA OBJ DA CLASSE
 		final Field field = ed.getClass().getDeclaredField("total"); //NOME DO ATRIBUTO
 		field.setAccessible(true);
-		BigInteger big = new BigInteger(10);
+		BigInteger big = new BigInteger("10");
 		ed.setTotal(big); //SET METODO
 		BigInteger resultado = ed.getTotal(); //GET DO METODO
-		assertEquals(resultado.intValue(), 10); //COMPARAR COM O VALOR OBTIDO NO GET
+		assertEquals(resultado, big); //COMPARAR COM O VALOR OBTIDO NO GET
 	}
 	
 	
@@ -65,7 +38,7 @@ class testExtentDefinition { //TESTCLASSE
 	@Test
 	public void validateSetUnit() throws NoSuchFieldException, IllegalAccessException{ //VALIDATEMETODO (SET)
 		ExtentDefinition ed = new ExtentDefinition(); //INSTANCIA OBJ DA CLASSE
-		ed.SetUnity("Unidade"); //SET METODO
+		ed.setUnit("Unidade"); //SET METODO
 		final Field field = ed.getClass().getDeclaredField("unit"); //NOME DO ATRIBUTO
 		field.setAccessible(true);
 		assertEquals(field.get(ed), "Unidade"); //COMPARAR COM O NOME SETADO

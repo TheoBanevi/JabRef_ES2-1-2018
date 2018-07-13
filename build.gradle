@@ -12,6 +12,9 @@ buildscript {
             url 'https://oss.sonatype.org/content/groups/public'
         }
     }
+	 dependencies {
+		        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.2.0-M1'
+	    }
 }
 
 plugins {
@@ -27,6 +30,11 @@ plugins {
 }
 test{
 	ignoreFailures=true
+	useJUnit {
+        excludeCategories 'org.jabref.testutils.category.DatabaseTests'
+        excludeCategories 'org.jabref.testutils.category.FetcherTests'
+        excludeCategories 'org.jabref.testutils.category.GUITests'
+    }
 }
 
 // use the gradle build scan feature: https://scans.gradle.com/get-started
@@ -319,6 +327,8 @@ javadoc {
 
 // Test tasks
 test {
+
+	exclude '/jabref/src/test/java/org/jabref/gui/fieldeditors/LinkedFileViewModelTest.java'
     useJUnitPlatform {
         excludeTags 'DatabaseTest', 'FetcherTest', 'GUITest', 'org.jabref.testutils.category.FetcherTest', 'org.jabref.testutils.category.GUITest'
     }

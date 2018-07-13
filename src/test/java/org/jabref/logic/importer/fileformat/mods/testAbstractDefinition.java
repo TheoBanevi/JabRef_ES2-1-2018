@@ -1,10 +1,11 @@
 package org.jabref.logic.importer.fileformat.mods;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Field;
 
-import org.junit.Test;;
+import org.jabref.logic.importer.fileformat.mods.AbstractDefinition;
+import org.junit.jupiter.api.Test;
 
 class testAbstractDefinition {
 
