@@ -3,7 +3,7 @@ package org.jabref.logic.formatter.casechanger;
 import org.jabref.logic.l10n.Localization;
 import org.jabref.model.cleanup.Formatter;
 
-public class CapitalizeFormatter extends Formatter {
+public class CapitalizeFormatter implements Formatter {
 
     @Override
     public String getName() {
@@ -37,4 +37,5 @@ public class CapitalizeFormatter extends Formatter {
     public String getExampleInput() {
         return "I have {a} DREAM";
     }
+
 }

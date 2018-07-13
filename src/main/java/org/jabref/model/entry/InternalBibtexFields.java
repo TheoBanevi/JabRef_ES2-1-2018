@@ -175,6 +175,12 @@ public class InternalBibtexFields {
         add(new BibtexSingleField(FieldName.PUBSTATE).withProperties(FieldProperty.PUBLICATION_STATE));
 
         // some internal fields
+        tempField = new BibtexSingleField(FieldName.NUMBER_COL, false, 32);
+        tempField.setPrivate();
+        tempField.setWriteable(false);
+        tempField.setDisplayable(false);
+        add(tempField);
+
         tempField = new BibtexSingleField(FieldName.OWNER, false).withProperties(FieldProperty.OWNER);
         tempField.setPrivate();
         add(tempField);
@@ -376,7 +382,7 @@ public class InternalBibtexFields {
         return Optional.empty();
     }
 
-    public static Double getFieldLength(String name) {
+    public static int getFieldLength(String name) {
         return InternalBibtexFields.getField(name)
                 .map(BibtexSingleField::getLength)
                 .orElse(BibtexSingleField.DEFAULT_FIELD_LENGTH);

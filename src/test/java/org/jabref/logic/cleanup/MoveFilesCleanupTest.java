@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
 
+import org.jabref.logic.layout.LayoutFormatterPreferences;
 import org.jabref.model.Defaults;
 import org.jabref.model.database.BibDatabase;
 import org.jabref.model.database.BibDatabaseContext;
@@ -61,8 +62,8 @@ public class MoveFilesCleanupTest {
 
         LinkedFile fileField = new LinkedFile("", fileBefore.getAbsolutePath(), "");
         entry.setField("file", FileFieldWriter.getStringRepresentation(fileField));
-        cleanup = new MoveFilesCleanup(databaseContext, "", fileDirPrefs);
-
+        cleanup = new MoveFilesCleanup(databaseContext, "", fileDirPrefs,
+                mock(LayoutFormatterPreferences.class));
         cleanup.cleanup(entry);
 
         assertFalse(fileBefore.exists());
@@ -84,7 +85,8 @@ public class MoveFilesCleanupTest {
         entry.setField("file", FileFieldWriter.getStringRepresentation(
                 Arrays.asList(new LinkedFile("", "", ""), fileField, new LinkedFile("", "", ""))));
 
-        cleanup = new MoveFilesCleanup(databaseContext, "", fileDirPrefs);
+        cleanup = new MoveFilesCleanup(databaseContext, "", fileDirPrefs,
+                mock(LayoutFormatterPreferences.class));
         cleanup.cleanup(entry);
 
         assertFalse(fileBefore.exists());
@@ -107,8 +109,8 @@ public class MoveFilesCleanupTest {
         LinkedFile fileField = new LinkedFile("", fileBefore.getAbsolutePath(), "");
         entry.setField("file", FileFieldWriter.getStringRepresentation(fileField));
 
-        cleanup = new MoveFilesCleanup(databaseContext, "[entrytype]", fileDirPrefs);
-
+        cleanup = new MoveFilesCleanup(databaseContext, "[entrytype]", fileDirPrefs,
+                mock(LayoutFormatterPreferences.class));
         cleanup.cleanup(entry);
 
         assertFalse(fileBefore.exists());
@@ -134,7 +136,8 @@ public class MoveFilesCleanupTest {
         LinkedFile fileField = new LinkedFile("", fileBefore.getAbsolutePath(), "");
         local_entry.setField("file", FileFieldWriter.getStringRepresentation(fileField));
 
-        cleanup = new MoveFilesCleanup(databaseContext, "[year]", fileDirPrefs);
+        cleanup = new MoveFilesCleanup(databaseContext, "[year]", fileDirPrefs,
+                mock(LayoutFormatterPreferences.class));
         cleanup.cleanup(local_entry);
 
         assertFalse(fileBefore.exists());
@@ -161,8 +164,8 @@ public class MoveFilesCleanupTest {
         LinkedFile fileField = new LinkedFile("", fileBefore.getAbsolutePath(), "");
         local_entry.setField("file", FileFieldWriter.getStringRepresentation(fileField));
 
-        cleanup = new MoveFilesCleanup(databaseContext, "[entrytype]/[year]/[auth]", fileDirPrefs);
-
+        cleanup = new MoveFilesCleanup(databaseContext, "[entrytype]/[year]/[auth]", fileDirPrefs,
+                mock(LayoutFormatterPreferences.class));
         cleanup.cleanup(local_entry);
 
         assertFalse(fileBefore.exists());

@@ -1,8 +1,5 @@
 package org.jabref.logic.l10n;
 
-import com.google.common.base.Splitter;
-import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -14,15 +11,18 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.base.Splitter;
+import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Checks that all property files are correctly encoded and can be loaded without errors.
  */
-class PropertiesLocaleCompletenessTest {
+public class PropertiesLocaleCompletenessTest {
 
     @Test
-    void testi10nFiles() throws IOException {
+    public void testi10nFiles() throws IOException {
         try (Stream<Path> pathStream = Files.list(Paths.get("src/main/resources/l10n"))) {
             for (Path p : pathStream.collect(Collectors.toList())) {
 
@@ -48,10 +48,12 @@ class PropertiesLocaleCompletenessTest {
     }
 
     @Test
-    void testCompletenessOfBundles() {
+    public void testCompletenessOfBundles() {
         for (String lang : Languages.LANGUAGES.values()) {
-            Path messagesPropertyFile = Paths.get("src/main/resources").resolve(Localization.RESOURCE_PREFIX + "_" + lang + ".properties");
-            assertTrue(Files.exists(messagesPropertyFile));
+            Path menuPropertyFile = Paths.get("src/main/resources").resolve(Localization.MENU_RESOURCE_PREFIX + "_" + lang + ".properties");
+            assertTrue(Files.exists(menuPropertyFile));
+            Path messagePropertyFile = Paths.get("src/main/resources").resolve(Localization.RESOURCE_PREFIX + "_" + lang + ".properties");
+            assertTrue(Files.exists(messagePropertyFile));
         }
     }
 

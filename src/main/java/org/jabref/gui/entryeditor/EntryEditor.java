@@ -3,7 +3,6 @@ package org.jabref.gui.entryeditor;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -19,9 +18,8 @@ import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 
+import org.jabref.Globals;
 import org.jabref.gui.BasePanel;
-import org.jabref.gui.DialogService;
-import org.jabref.gui.GUIGlobals;
 import org.jabref.gui.entryeditor.fileannotationtab.FileAnnotationTab;
 import org.jabref.gui.help.HelpAction;
 import org.jabref.gui.keyboard.KeyBinding;
@@ -29,7 +27,7 @@ import org.jabref.gui.menus.ChangeEntryTypeMenu;
 import org.jabref.gui.mergeentries.EntryFetchAndMergeWorker;
 import org.jabref.gui.undo.CountingUndoManager;
 import org.jabref.gui.undo.UndoableKeyChange;
-import org.jabref.gui.util.ColorUtil;
+import org.jabref.gui.util.ControlHelper;
 import org.jabref.gui.util.DefaultTaskExecutor;
 import org.jabref.logic.TypedBibEntry;
 import org.jabref.logic.bibtexkeypattern.BibtexKeyGenerator;
@@ -39,9 +37,8 @@ import org.jabref.logic.importer.WebFetchers;
 import org.jabref.logic.search.SearchQueryHighlightListener;
 import org.jabref.model.database.BibDatabaseContext;
 import org.jabref.model.entry.BibEntry;
-import org.jabref.model.util.FileUpdateMonitor;
+import org.jabref.preferences.JabRefPreferences;
 
-import com.airhacks.afterburner.views.ViewLoader;
 import org.fxmisc.easybind.EasyBind;
 import org.fxmisc.easybind.Subscription;
 
@@ -63,7 +60,6 @@ public class EntryEditor extends BorderPane {
     private final List<SearchQueryHighlightListener> searchListeners = new ArrayList<>();
     private Subscription typeSubscription;
     private final List<EntryEditorTab> tabs;
-    private final FileUpdateMonitor fileMonitor;
     /**
      * A reference to the entry this editor works on.
      */
@@ -74,27 +70,16 @@ public class EntryEditor extends BorderPane {
     @FXML private Button typeChangeButton;
     @FXML private Button fetcherButton;
     @FXML private Label typeLabel;
-    private final EntryEditorPreferences preferences;
-    private final DialogService dialogService;
 
-    public EntryEditor(BasePanel panel, EntryEditorPreferences preferences, FileUpdateMonitor fileMonitor, DialogService dialogService) {
+    public EntryEditor(BasePanel panel) {
         this.panel = panel;
         this.bibDatabaseContext = panel.getBibDatabaseContext();
         this.undoManager = panel.getUndoManager();
-        this.preferences = Objects.requireNonNull(preferences);
-        this.fileMonitor = fileMonitor;
-        this.dialogService = dialogService;
 
-        ViewLoader.view(this)
-                  .root(this)
-                  .load();
+        ControlHelper.loadFXMLForControl(this);
 
-        if (GUIGlobals.currentFont != null) {
-            setStyle(
-                    "text-area-background: " + ColorUtil.toHex(GUIGlobals.validFieldBackgroundColor) + ";"
-                            + "text-area-foreground: " + ColorUtil.toHex(GUIGlobals.editorTextColor) + ";"
-                            + "text-area-highlight: " + ColorUtil.toHex(GUIGlobals.activeBackgroundColor) + ";");
-        }
+        getStylesheets().add(EntryEditor.class.getResource("EntryEditor.css").toExternalForm());
+        setStyle("-fx-font-size: " + Globals.prefs.getFontSizeFX() + "pt;");
 
         EasyBind.subscribe(tabbed.getSelectionModel().selectedItemProperty(), tab -> {
             EntryEditorTab activeTab = (EntryEditorTab) tab;
@@ -112,8 +97,8 @@ public class EntryEditor extends BorderPane {
      * Set-up key bindings specific for the entry editor.
      */
     private void setupKeyBindings() {
-        this.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
-            Optional<KeyBinding> keyBinding = preferences.getKeyBindings().mapToKeyBinding(event);
+        tabbed.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            Optional<KeyBinding> keyBinding = Globals.getKeyPrefs().mapToKeyBinding(event);
             if (keyBinding.isPresent()) {
                 switch (keyBinding.get()) {
                     case ENTRY_EDITOR_NEXT_PANEL:
@@ -126,24 +111,16 @@ public class EntryEditor extends BorderPane {
                         tabbed.getSelectionModel().selectPrevious();
                         event.consume();
                         break;
-                    case ENTRY_EDITOR_NEXT_ENTRY:
-                        panel.selectNextEntry();
-                        event.consume();
-                        break;
-                    case ENTRY_EDITOR_PREVIOUS_ENTRY:
-                        panel.selectPreviousEntry();
-                        event.consume();
-                        break;
                     case HELP:
                         HelpAction.openHelpPage(HelpFile.ENTRY_EDITOR);
                         event.consume();
                         break;
-                    case CLOSE:
+                    case CLOSE_ENTRY_EDITOR:
                         close();
                         event.consume();
                         break;
                     default:
-                        // Pass other keys to parent
+                        // Pass other keys to children
                 }
             }
         });
@@ -156,7 +133,7 @@ public class EntryEditor extends BorderPane {
 
     @FXML
     public void generateKey() {
-        new BibtexKeyGenerator(bibDatabaseContext, preferences.getBibtexKeyPatternPreferences())
+        new BibtexKeyGenerator(bibDatabaseContext, Globals.prefs.getBibtexKeyPatternPreferences())
                 .generateAndSetKey(entry)
                 .ifPresent(change -> undoManager.addEdit(new UndoableKeyChange(change)));
     }
@@ -180,28 +157,29 @@ public class EntryEditor extends BorderPane {
         List<EntryEditorTab> tabs = new LinkedList<>();
 
         // Required fields
-        tabs.add(new RequiredFieldsTab(panel.getBibDatabaseContext(), panel.getSuggestionProviders(), undoManager, dialogService));
+        tabs.add(new RequiredFieldsTab(panel.getBibDatabaseContext(), panel.getSuggestionProviders(), undoManager));
 
         // Optional fields
-        tabs.add(new OptionalFieldsTab(panel.getBibDatabaseContext(), panel.getSuggestionProviders(), undoManager, dialogService));
-        tabs.add(new OptionalFields2Tab(panel.getBibDatabaseContext(), panel.getSuggestionProviders(), undoManager, dialogService));
-        tabs.add(new DeprecatedFieldsTab(panel.getBibDatabaseContext(), panel.getSuggestionProviders(), undoManager, dialogService));
+        tabs.add(new OptionalFieldsTab(panel.getBibDatabaseContext(), panel.getSuggestionProviders(), undoManager));
+        tabs.add(new OptionalFields2Tab(panel.getBibDatabaseContext(), panel.getSuggestionProviders(), undoManager));
+        tabs.add(new DeprecatedFieldsTab(panel.getBibDatabaseContext(), panel.getSuggestionProviders(), undoManager));
 
         // Other fields
-        tabs.add(new OtherFieldsTab(panel.getBibDatabaseContext(), panel.getSuggestionProviders(), undoManager, preferences.getCustomTabFieldNames(), dialogService));
+        tabs.add(new OtherFieldsTab(panel.getBibDatabaseContext(), panel.getSuggestionProviders(), undoManager));
 
         // General fields from preferences
-        for (Map.Entry<String, List<String>> tab : preferences.getEntryEditorTabList().entrySet()) {
-            tabs.add(new UserDefinedFieldsTab(tab.getKey(), tab.getValue(), panel.getBibDatabaseContext(), panel.getSuggestionProviders(), undoManager, dialogService));
+        EntryEditorTabList tabList = Globals.prefs.getEntryEditorTabList();
+        for (int i = 0; i < tabList.getTabCount(); i++) {
+            tabs.add(new UserDefinedFieldsTab(tabList.getTabName(i), tabList.getTabFields(i), panel.getBibDatabaseContext(), panel.getSuggestionProviders(), undoManager));
         }
 
         // Special tabs
         tabs.add(new MathSciNetTab());
         tabs.add(new FileAnnotationTab(panel.getAnnotationCache()));
-        tabs.add(new RelatedArticlesTab(preferences));
+        tabs.add(new RelatedArticlesTab(Globals.prefs));
 
         // Source tab
-        sourceTab = new SourceTab(bibDatabaseContext, undoManager, preferences.getLatexFieldFormatterPreferences(), preferences.getImportFormatPreferences(), fileMonitor);
+        sourceTab = new SourceTab(bibDatabaseContext, undoManager, Globals.prefs.getLatexFieldFormatterPreferences(), Globals.prefs, Globals.getFileUpdateMonitor());
         tabs.add(sourceTab);
         return tabs;
     }
@@ -246,33 +224,34 @@ public class EntryEditor extends BorderPane {
     public void setEntry(BibEntry entry) {
         Objects.requireNonNull(entry);
 
-        // Remove subscription for old entry if existing
+        // remove subscription for old entry if existing
         if (typeSubscription != null) {
             typeSubscription.unsubscribe();
         }
-
         this.entry = entry;
 
-        recalculateVisibleTabs();
-        if (preferences.showSourceTabByDefault()) {
-            tabbed.getSelectionModel().select(sourceTab);
-        }
-
-        // Notify current tab about new entry
-        getSelectedTab().notifyAboutFocus(entry);
-
-        setupToolBar();
-
-        // Subscribe to type changes for rebuilding the currently visible tab
-        typeSubscription = EasyBind.subscribe(this.entry.typeProperty(), type -> {
-            typeLabel.setText(new TypedBibEntry(entry, bibDatabaseContext.getMode()).getTypeForDisplay());
+        DefaultTaskExecutor.runInJavaFXThread(() -> {
             recalculateVisibleTabs();
-            getSelectedTab().notifyAboutFocus(entry);
-        });
-    }
+            if (Globals.prefs.getBoolean(JabRefPreferences.DEFAULT_SHOW_SOURCE)) {
+                tabbed.getSelectionModel().select(sourceTab);
+            }
 
-    private EntryEditorTab getSelectedTab() {
-        return (EntryEditorTab) tabbed.getSelectionModel().getSelectedItem();
+            // Notify current tab about new entry
+            EntryEditorTab selectedTab = (EntryEditorTab) tabbed.getSelectionModel().getSelectedItem();
+            selectedTab.notifyAboutFocus(entry);
+
+            setupToolBar();
+        });
+
+        // subscribe to type changes for rebuilding the currently visible tab
+        typeSubscription = EasyBind.subscribe(this.entry.typeProperty(), type -> {
+            DefaultTaskExecutor.runInJavaFXThread(() -> {
+                typeLabel.setText(new TypedBibEntry(entry, bibDatabaseContext.getMode()).getTypeForDisplay());
+                recalculateVisibleTabs();
+                EntryEditorTab selectedTab = (EntryEditorTab) tabbed.getSelectionModel().getSelectedItem();
+                selectedTab.notifyAboutFocus(entry);
+            });
+        });
     }
 
     private void setupToolBar() {
@@ -281,12 +260,13 @@ public class EntryEditor extends BorderPane {
         typeLabel.setText(typedEntry.getTypeForDisplay());
 
         // Add type change menu
-        ContextMenu typeMenu = new ChangeEntryTypeMenu(preferences.getKeyBindings()).getChangeEntryTypePopupMenu(entry, bibDatabaseContext, undoManager);
+        ContextMenu typeMenu = new ChangeEntryTypeMenu().getChangeEntryTypePopupMenu(entry, bibDatabaseContext, undoManager);
         typeLabel.setOnMouseClicked(event -> typeMenu.show(typeLabel, Side.RIGHT, 0, 0));
         typeChangeButton.setOnMouseClicked(event -> typeMenu.show(typeChangeButton, Side.RIGHT, 0, 0));
         // Add menu for fetching bibliographic information
         ContextMenu fetcherMenu = new ContextMenu();
-        for (EntryBasedFetcher fetcher : WebFetchers.getEntryBasedFetchers(preferences.getImportFormatPreferences())) {
+        for (EntryBasedFetcher fetcher : WebFetchers
+                .getEntryBasedFetchers(Globals.prefs.getImportFormatPreferences())) {
             MenuItem fetcherMenuItem = new MenuItem(fetcher.getName());
             fetcherMenuItem.setOnAction(event -> new EntryFetchAndMergeWorker(panel, getEntry(), fetcher).execute());
             fetcherMenu.getItems().add(fetcherMenuItem);

@@ -1,15 +1,11 @@
 package org.jabref.gui.push;
 
-import org.jabref.gui.DialogService;
-import org.jabref.gui.icon.IconTheme;
-import org.jabref.gui.icon.JabRefIcon;
+import javax.swing.Icon;
+
+import org.jabref.gui.IconTheme;
 import org.jabref.preferences.JabRefPreferences;
 
 public class PushToWinEdt extends AbstractPushToApplication implements PushToApplication {
-
-    public PushToWinEdt(DialogService dialogService) {
-        super(dialogService);
-    }
 
     @Override
     public String getApplicationName() {
@@ -17,14 +13,14 @@ public class PushToWinEdt extends AbstractPushToApplication implements PushToApp
     }
 
     @Override
-    public JabRefIcon getIcon() {
-        return IconTheme.JabRefIcons.APPLICATION_WINEDT;
+    public Icon getIcon() {
+        return IconTheme.getImage("winedt");
     }
 
     @Override
     protected String[] getCommandLine(String keyString) {
         return new String[] {commandPath,
-                             "\"[InsText('" + getCiteCommand() + "{" + keyString.replace("'", "''") + "}');]\""};
+                "\"[InsText('" + getCiteCommand() + "{" + keyString.replace("'", "''") + "}');]\""};
     }
 
     @Override

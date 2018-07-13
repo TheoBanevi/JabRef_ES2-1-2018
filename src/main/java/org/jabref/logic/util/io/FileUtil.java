@@ -2,6 +2,7 @@ package org.jabref.logic.util.io;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -22,10 +23,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jabref.logic.bibtexkeypattern.BracketedPattern;
+import org.jabref.logic.layout.Layout;
+import org.jabref.logic.layout.LayoutFormatterPreferences;
+import org.jabref.logic.layout.LayoutHelper;
 import org.jabref.model.database.BibDatabase;
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.util.OptionalUtil;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +70,7 @@ public class FileUtil {
      * Returns the name part of a file name (i.e., everything in front of last ".").
      */
     public static String getBaseName(String fileNameWithExtension) {
-        return com.google.common.io.Files.getNameWithoutExtension(fileNameWithExtension);
+        return FilenameUtils.getBaseName(fileNameWithExtension);
     }
 
     /**
@@ -187,9 +192,7 @@ public class FileUtil {
      * @param toFile          The target fileName
      * @param replaceExisting Wether to replace existing files or not
      * @return True if the rename was successful, false if an exception occurred
-     * @deprecated Use {@link #renameFileWithException(Path, Path, boolean)} instead and handle exception properly
      */
-    @Deprecated
     public static boolean renameFile(Path fromFile, Path toFile, boolean replaceExisting) {
         try {
             return renameFileWithException(fromFile, toFile, replaceExisting);
@@ -245,6 +248,40 @@ public class FileUtil {
                 .flatMap(entry -> entry.getFiles().stream())
                 .flatMap(file -> OptionalUtil.toStream(file.findIn(fileDirs)))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Determines filename provided by an entry in a database
+     *
+     * @param database        the database, where the entry is located
+     * @param entry           the entry to which the file should be linked to
+     * @param fileNamePattern the filename pattern
+     * @param prefs           the layout preferences
+     * @return a suggested fileName
+     * @deprecated use String createFileNameFromPattern(BibDatabase database, BibEntry entry, String fileNamePattern ) instead.
+     */
+    @Deprecated
+    public static String createFileNameFromPattern(BibDatabase database, BibEntry entry, String fileNamePattern,
+                                                   LayoutFormatterPreferences prefs) {
+        String targetName = null;
+
+        StringReader sr = new StringReader(fileNamePattern);
+        Layout layout = null;
+        try {
+            layout = new LayoutHelper(sr, prefs).getLayoutFromText();
+        } catch (IOException e) {
+            LOGGER.info("Wrong format " + e.getMessage(), e);
+        }
+        if (layout != null) {
+            targetName = layout.doLayout(entry, database);
+        }
+
+        if ((targetName == null) || targetName.isEmpty()) {
+            targetName = entry.getCiteKeyOptional().orElse("default");
+        }
+        //Removes illegal characters from filename
+        targetName = FileNameCleaner.cleanFileName(targetName);
+        return targetName;
     }
 
     /**

@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.jabref.logic.bibtex.BibEntryAssert;
-import org.jabref.logic.util.StandardFileType;
+import org.jabref.logic.util.FileType;
 import org.jabref.model.entry.BibEntry;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -119,7 +119,7 @@ public class InspecImporterTest {
 
     @Test
     public void testsGetExtensions() {
-        assertEquals(StandardFileType.TXT, importer.getFileType());
+        assertEquals(FileType.INSPEC, importer.getFileType());
     }
 
     @Test

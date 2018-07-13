@@ -12,8 +12,8 @@ import java.util.regex.Pattern;
 
 import org.jabref.logic.importer.Importer;
 import org.jabref.logic.importer.ParserResult;
+import org.jabref.logic.util.FileType;
 import org.jabref.logic.util.OS;
-import org.jabref.logic.util.StandardFileType;
 import org.jabref.model.entry.AuthorList;
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.FieldName;
@@ -29,8 +29,8 @@ public class RisImporter extends Importer {
     }
 
     @Override
-    public StandardFileType getFileType() {
-        return StandardFileType.RIS;
+    public FileType getFileType() {
+        return FileType.RIS;
     }
 
     @Override
@@ -49,7 +49,8 @@ public class RisImporter extends Importer {
         List<BibEntry> bibitems = new ArrayList<>();
 
         //use optional here, so that no exception will be thrown if the file is empty
-        String linesAsString = reader.lines().reduce((line, nextline) -> line + "\n" + nextline).orElse("");
+        Optional<String> OptionalLines = reader.lines().reduce((line, nextline) -> line + "\n" + nextline);
+        String linesAsString = OptionalLines.isPresent() ? OptionalLines.get() : "";
 
         String[] entries = linesAsString.replace("\u2013", "-").replace("\u2014", "--").replace("\u2015", "--")
                 .split("ER  -.*\\n");
@@ -206,7 +207,7 @@ public class RisImporter extends Importer {
                         }
                     } else if ("U1".equals(tag) || "U2".equals(tag) || "N1".equals(tag)) {
                         if (!comment.isEmpty()) {
-                            comment = comment + OS.NEWLINE;
+                            comment = comment + " ";
                         }
                         comment = comment + value;
                     }  else if ("M3".equals(tag) || "DO".equals(tag)) {
@@ -268,7 +269,7 @@ public class RisImporter extends Importer {
             BibEntry entry = new BibEntry(type);
             entry.setField(fields);
             // month has a special treatment as we use the separate method "setMonth" of BibEntry instead of directly setting the value
-            month.ifPresent(entry::setMonth);
+            month.ifPresent(parsedMonth -> entry.setMonth(parsedMonth));
             bibitems.add(entry);
 
         }

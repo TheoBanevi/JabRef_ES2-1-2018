@@ -2,7 +2,6 @@ package org.jabref.gui.fieldeditors;
 
 import javafx.scene.Parent;
 
-import org.jabref.gui.util.ControlHelper;
 import org.jabref.model.entry.BibEntry;
 
 public interface FieldEditorFX {
@@ -11,16 +10,8 @@ public interface FieldEditorFX {
 
     Parent getNode();
 
-    default void focus() {
-        getNode().getChildrenUnmodifiable()
-                 .stream()
-                 .findFirst()
-                 .orElse(getNode())
-                 .requestFocus();
-    }
-
-    default boolean childIsFocused() {
-        return ControlHelper.childIsFocused(getNode());
+    default void requestFocus() {
+        getNode().requestFocus();
     }
 
     /**

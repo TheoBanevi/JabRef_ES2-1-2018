@@ -23,6 +23,7 @@ public class TestUtils {
      */
     public static void closeJabRef() {
         if (JabRefGUI.getMainFrame() != null) {
+            JabRefGUI.getMainFrame().dispose();
         }
     }
 

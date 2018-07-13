@@ -2,22 +2,20 @@ package org.jabref.preferences;
 
 import java.util.List;
 
-import org.jabref.Globals;
-import org.jabref.logic.layout.LayoutFormatterPreferences;
-
 public class PreviewPreferences {
 
     private final List<String> previewCycle;
-    private int previewCyclePosition;
-    private final Number previewPanelDividerPosition;
+    private final int previewCyclePosition;
+    private final int previewPanelHeight;
     private final boolean previewPanelEnabled;
     private final String previewStyle;
     private final String previewStyleDefault;
 
-    public PreviewPreferences(List<String> previewCycle, int previeCyclePosition, Number previewPanelDividerPosition, boolean previewPanelEnabled, String previewStyle, String previewStyleDefault) {
+
+    public PreviewPreferences(List<String> previewCycle, int previeCyclePosition, int previewPanelHeight, boolean previewPanelEnabled, String previewStyle, String previewStyleDefault) {
         this.previewCycle = previewCycle;
         this.previewCyclePosition = previeCyclePosition;
-        this.previewPanelDividerPosition = previewPanelDividerPosition;
+        this.previewPanelHeight = previewPanelHeight;
         this.previewPanelEnabled = previewPanelEnabled;
         this.previewStyle = previewStyle;
         this.previewStyleDefault = previewStyleDefault;
@@ -31,8 +29,8 @@ public class PreviewPreferences {
         return previewCyclePosition;
     }
 
-    public Number getPreviewPanelDividerPosition() {
-        return previewPanelDividerPosition;
+    public int getPreviewPanelHeight() {
+        return previewPanelHeight;
     }
 
     public boolean isPreviewPanelEnabled() {
@@ -51,18 +49,10 @@ public class PreviewPreferences {
         return new Builder(this);
     }
 
-    public String getCurrentPreviewStyle() {
-        return getPreviewCycle().get(getPreviewCyclePosition());
-    }
-
-    public LayoutFormatterPreferences getLayoutFormatterPreferences() {
-        return Globals.prefs.getLayoutFormatterPreferences(Globals.journalAbbreviationLoader);
-    }
-
     public static class Builder {
         private List<String> previewCycle;
         private int previeCyclePosition;
-        private Number previewPanelDividerPosition;
+        private int previewPanelHeight;
         private boolean previewPanelEnabled;
         private String previewStyle;
         private final String previewStyleDefault;
@@ -71,7 +61,7 @@ public class PreviewPreferences {
         public Builder(PreviewPreferences previewPreferences) {
             this.previewCycle = previewPreferences.getPreviewCycle();
             this.previeCyclePosition = previewPreferences.getPreviewCyclePosition();
-            this.previewPanelDividerPosition = previewPreferences.getPreviewPanelDividerPosition();
+            this.previewPanelHeight = previewPreferences.getPreviewPanelHeight();
             this.previewPanelEnabled = previewPreferences.isPreviewPanelEnabled();
             this.previewStyle = previewPreferences.getPreviewStyle();
             this.previewStyleDefault = previewPreferences.getPreviewStyleDefault();
@@ -91,8 +81,8 @@ public class PreviewPreferences {
             return this;
         }
 
-        public Builder withPreviewPanelDividerPosition(Number previewPanelDividerPosition) {
-            this.previewPanelDividerPosition = previewPanelDividerPosition;
+        public Builder withPreviewPanelHeight(int previewPanelHeight) {
+            this.previewPanelHeight = previewPanelHeight;
             return this;
         }
 
@@ -107,7 +97,7 @@ public class PreviewPreferences {
         }
 
         public PreviewPreferences build() {
-            return new PreviewPreferences(previewCycle, previeCyclePosition, previewPanelDividerPosition, previewPanelEnabled, previewStyle, previewStyleDefault);
+            return new PreviewPreferences(previewCycle, previeCyclePosition, previewPanelHeight, previewPanelEnabled, previewStyle, previewStyleDefault);
         }
     }
 

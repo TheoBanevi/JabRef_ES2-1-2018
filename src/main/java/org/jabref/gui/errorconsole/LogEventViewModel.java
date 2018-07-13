@@ -3,8 +3,7 @@ package org.jabref.gui.errorconsole;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.jabref.gui.icon.IconTheme;
-import org.jabref.gui.icon.JabRefIcon;
+import org.jabref.gui.IconTheme;
 import org.jabref.logic.util.OS;
 
 import com.google.common.base.Throwables;
@@ -34,15 +33,15 @@ public class LogEventViewModel {
         }
     }
 
-    public JabRefIcon getIcon() {
+    public IconTheme.JabRefIcon getIcon() {
         switch (logEvent.getLevel().getStandardLevel()) {
             case ERROR:
-                return (IconTheme.JabRefIcons.INTEGRITY_FAIL);
+                return (IconTheme.JabRefIcon.INTEGRITY_FAIL);
             case WARN:
-                return (IconTheme.JabRefIcons.INTEGRITY_WARN);
+                return (IconTheme.JabRefIcon.INTEGRITY_WARN);
             case INFO:
             default:
-                return (IconTheme.JabRefIcons.INTEGRITY_INFO);
+                return (IconTheme.JabRefIcon.INTEGRITY_INFO);
         }
     }
 

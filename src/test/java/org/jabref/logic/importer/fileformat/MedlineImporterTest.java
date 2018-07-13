@@ -1,6 +1,6 @@
 package org.jabref.logic.importer.fileformat;
 
-import org.jabref.logic.util.StandardFileType;
+import org.jabref.logic.util.FileType;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +37,7 @@ public class MedlineImporterTest {
 
     @Test
     public void testsGetExtensions() {
-        assertEquals(StandardFileType.MEDLINE, importer.getFileType());
+        assertEquals(FileType.MEDLINE, importer.getFileType());
     }
 
     @Test

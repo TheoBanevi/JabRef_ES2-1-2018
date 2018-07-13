@@ -23,7 +23,6 @@ import javax.swing.event.ChangeListener;
 
 import org.jabref.Globals;
 import org.jabref.gui.BasePanel;
-import org.jabref.gui.DialogService;
 import org.jabref.gui.JabRefFrame;
 import org.jabref.gui.externalfiletype.ExternalFileType;
 import org.jabref.gui.externalfiletype.ExternalFileTypes;
@@ -65,6 +64,8 @@ public class DroppedFileHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DroppedFileHandler.class);
 
+    private final JabRefFrame frame;
+
     private final BasePanel panel;
 
     private final JRadioButton linkInPlace = new JRadioButton();
@@ -78,12 +79,10 @@ public class DroppedFileHandler {
     private final JTextField renameToTextBox = new JTextField(50);
 
     private final JPanel optionsPanel = new JPanel();
-    private final DialogService dialogService;
-    private JabRefPreferences preferences;
 
     public DroppedFileHandler(JabRefFrame frame, BasePanel panel) {
-        this.dialogService = frame.getDialogService();
-        this.preferences = frame.prefs();
+
+        this.frame = frame;
         this.panel = panel;
 
         ButtonGroup grp = new ButtonGroup();
@@ -253,7 +252,7 @@ public class DroppedFileHandler {
         contentPanel.add(confirmationMessage, BorderLayout.NORTH);
         contentPanel.add(entriesPanel, BorderLayout.CENTER);
 
-        int reply = JOptionPane.showConfirmDialog(null, contentPanel,
+        int reply = JOptionPane.showConfirmDialog(frame, contentPanel,
                 Localization.lang("XMP-metadata found in PDF: %0", fileName), JOptionPane.YES_NO_CANCEL_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
 
@@ -267,10 +266,10 @@ public class DroppedFileHandler {
         // reply == JOptionPane.YES_OPTION)
 
         /*
-         * TODO Extract Import functionality from ImportAction then we could
+         * TODO Extract Import functionality from ImportMenuItem then we could
          * do:
          *
-         * ImportAction importer = new ImportAction(frame, (mainTable ==
+         * ImportMenuItem importer = new ImportMenuItem(frame, (mainTable ==
          * null), new PdfXmpImporter());
          *
          * importer.automatedImport(new String[] { fileName });
@@ -305,7 +304,7 @@ public class DroppedFileHandler {
             for (BibEntry aXmpEntriesInFile : xmpEntriesInFile) {
 
                 aXmpEntriesInFile.setId(IdGenerator.next());
-                edits.addEdit(new UndoableInsertEntry(panel.getDatabase(), aXmpEntriesInFile));
+                edits.addEdit(new UndoableInsertEntry(panel.getDatabase(), aXmpEntriesInFile, panel));
                 panel.getDatabase().insertEntry(aXmpEntriesInFile);
                 doLink(aXmpEntriesInFile, fileType, destFilename, true, edits);
 
@@ -369,24 +368,24 @@ public class DroppedFileHandler {
             renameToTextBox
                     .setText(targetDirName.concat("/").concat(targetName.concat(".").concat(fileType.getExtension())));
         }
-        linkInPlace.setSelected(preferences.getBoolean(JabRefPreferences.DROPPEDFILEHANDLER_LEAVE));
-        copyRadioButton.setSelected(preferences.getBoolean(JabRefPreferences.DROPPEDFILEHANDLER_COPY));
-        moveRadioButton.setSelected(preferences.getBoolean(JabRefPreferences.DROPPEDFILEHANDLER_MOVE));
-        renameCheckBox.setSelected(preferences.getBoolean(JabRefPreferences.DROPPEDFILEHANDLER_RENAME));
+        linkInPlace.setSelected(frame.prefs().getBoolean(JabRefPreferences.DROPPEDFILEHANDLER_LEAVE));
+        copyRadioButton.setSelected(frame.prefs().getBoolean(JabRefPreferences.DROPPEDFILEHANDLER_COPY));
+        moveRadioButton.setSelected(frame.prefs().getBoolean(JabRefPreferences.DROPPEDFILEHANDLER_MOVE));
+        renameCheckBox.setSelected(frame.prefs().getBoolean(JabRefPreferences.DROPPEDFILEHANDLER_RENAME));
 
         linkInPlace.addChangeListener(cl);
         cl.stateChanged(new ChangeEvent(linkInPlace));
 
         try {
             Object[] messages = {Localization.lang("How would you like to link to '%0'?", linkFileName), optionsPanel};
-            int reply = JOptionPane.showConfirmDialog(null, messages, dialogTitle, JOptionPane.OK_CANCEL_OPTION,
+            int reply = JOptionPane.showConfirmDialog(frame, messages, dialogTitle, JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.QUESTION_MESSAGE);
             if (reply == JOptionPane.OK_OPTION) {
                 // store user's choice
-                preferences.putBoolean(JabRefPreferences.DROPPEDFILEHANDLER_LEAVE, linkInPlace.isSelected());
-                preferences.putBoolean(JabRefPreferences.DROPPEDFILEHANDLER_COPY, copyRadioButton.isSelected());
-                preferences.putBoolean(JabRefPreferences.DROPPEDFILEHANDLER_MOVE, moveRadioButton.isSelected());
-                preferences.putBoolean(JabRefPreferences.DROPPEDFILEHANDLER_RENAME, renameCheckBox.isSelected());
+                frame.prefs().putBoolean(JabRefPreferences.DROPPEDFILEHANDLER_LEAVE, linkInPlace.isSelected());
+                frame.prefs().putBoolean(JabRefPreferences.DROPPEDFILEHANDLER_COPY, copyRadioButton.isSelected());
+                frame.prefs().putBoolean(JabRefPreferences.DROPPEDFILEHANDLER_MOVE, moveRadioButton.isSelected());
+                frame.prefs().putBoolean(JabRefPreferences.DROPPEDFILEHANDLER_RENAME, renameCheckBox.isSelected());
                 return true;
             } else {
                 return false;
@@ -481,7 +480,7 @@ public class DroppedFileHandler {
             Path destFile = dir.get().resolve(destFilename);
 
             if (Files.exists(destFile)) {
-                int answer = JOptionPane.showConfirmDialog(null,
+                int answer = JOptionPane.showConfirmDialog(frame,
                         Localization.lang("'%0' exists. Overwrite file?", destFile.toString()),
                         Localization.lang("Overwrite file?"), JOptionPane.YES_NO_OPTION);
                 if (answer == JOptionPane.NO_OPTION) {
@@ -500,10 +499,10 @@ public class DroppedFileHandler {
             if (FileUtil.renameFile(fromFile, destFile, true)) {
                 return true;
             } else {
-                dialogService.showErrorDialogAndWait(
-                        Localization.lang("Move file failed"),
+                JOptionPane.showMessageDialog(frame,
                         Localization.lang("Could not move file '%0'.", destFile.toString())
-                                + Localization.lang("Please move the file manually and link in place."));
+                                + Localization.lang("Please move the file manually and link in place."),
+                        Localization.lang("Move file failed"), JOptionPane.ERROR_MESSAGE);
                 return false;
             }
         }
@@ -522,7 +521,7 @@ public class DroppedFileHandler {
     private boolean doCopy(String fileName, String toFile, NamedCompound edits) {
 
         List<String> dirs = panel.getBibDatabaseContext()
-                                 .getFileDirectories(Globals.prefs.getFileDirectoryPreferences());
+                .getFileDirectories(Globals.prefs.getFileDirectoryPreferences());
         int found = -1;
         for (int i = 0; i < dirs.size(); i++) {
             if (new File(dirs.get(i)).exists()) {
@@ -545,7 +544,7 @@ public class DroppedFileHandler {
         }
 
         if (Files.exists(destFile)) {
-            int answer = JOptionPane.showConfirmDialog(null,
+            int answer = JOptionPane.showConfirmDialog(frame,
                     Localization.lang("'%0' exists. Overwrite file?", destFile.toString()),
                     Localization.lang("File exists"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (answer == JOptionPane.NO_OPTION) {

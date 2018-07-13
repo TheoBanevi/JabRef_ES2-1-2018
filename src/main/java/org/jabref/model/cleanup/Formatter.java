@@ -1,29 +1,28 @@
 package org.jabref.model.cleanup;
 
 /**
- * The Formatter is used for a Filter design-pattern. Extending classes have to accept a String and returned a
- * formatted version of it. Implementations have to reside in the logic package.
+ * The Formatter is used for a Filter design-pattern. Implementing classes have to accept a String and returned a
+ * formatted version of it.
  *
  * Example:
  *
  * "John von Neumann" => "von Neumann, John"
  *
  */
-public abstract class Formatter {
-
+public interface Formatter {
     /**
      * Returns a human readable name of the formatter usable for e.g. in the GUI
      *
      * @return the name of the formatter, always not null
      */
-    public abstract String getName();
+    String getName();
 
 
     /**
      * Returns a unique key for the formatter that can be used for its identification
      * @return the key of the formatter, always not null
      */
-    public abstract String getKey();
+    String getKey();
 
     /**
      * Formats a field value by with a particular formatter transformation.
@@ -33,14 +32,14 @@ public abstract class Formatter {
      * @param value the input String
      * @return the formatted output String
      */
-    public abstract String format(String value);
+    String format(String value);
 
     /**
      * Returns a description of the formatter.
      *
      * @return the description string, always non empty
      */
-    public abstract String getDescription();
+    String getDescription();
 
     /**
      * Returns an example input string of the formatter.
@@ -48,15 +47,14 @@ public abstract class Formatter {
      *
      * @return the example input string, always non empty
      */
-    public abstract String getExampleInput();
+    String getExampleInput();
 
     /**
      * Returns a default hashcode of the formatter based on its key.
      *
      * @return the hash of the key of the formatter
      */
-    @Override
-    public int hashCode() {
+    default int defaultHashCode() {
         return getKey().hashCode();
     }
 
@@ -66,8 +64,7 @@ public abstract class Formatter {
      * @param obj the object to compare the formatter to
      * @return true if the object is a formatter with the same key
      */
-    @Override
-    public boolean equals(Object obj) {
+    default boolean defaultEquals(Object obj) {
         if (obj instanceof Formatter) {
             return getKey().equals(((Formatter)obj).getKey());
         } else {

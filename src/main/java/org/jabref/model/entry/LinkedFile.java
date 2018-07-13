@@ -5,7 +5,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.URL;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -160,15 +159,11 @@ public class LinkedFile implements Serializable {
     }
 
     public Optional<Path> findIn(List<Path> directories) {
-        try {
-            Path file = Paths.get(link.get());
-            if (file.isAbsolute() || directories.isEmpty()) {
-                return Optional.of(file);
-            } else {
-                return FileHelper.expandFilenameAsPath(link.get(), directories);
-            }
-        } catch (InvalidPathException ex) {
-            return Optional.empty();
+        Path file = Paths.get(link.get());
+        if (file.isAbsolute() || directories.isEmpty()) {
+            return Optional.of(file);
+        } else {
+            return FileHelper.expandFilenameAsPath(link.get(), directories);
         }
     }
 

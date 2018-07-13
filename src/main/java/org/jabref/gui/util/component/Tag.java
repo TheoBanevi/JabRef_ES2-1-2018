@@ -11,7 +11,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 
-import com.airhacks.afterburner.views.ViewLoader;
+import org.jabref.gui.util.ControlHelper;
+
 import org.fxmisc.easybind.EasyBind;
 
 
@@ -27,9 +28,7 @@ public class Tag<T> extends HBox {
     public Tag(Function<T, String> toString) {
         Objects.requireNonNull(toString);
 
-        ViewLoader.view(this)
-                  .root(this)
-                  .load();
+        ControlHelper.loadFXMLForControl(this);
 
         value = new SimpleObjectProperty<>();
         text.textProperty().bind(EasyBind.map(value, toString));

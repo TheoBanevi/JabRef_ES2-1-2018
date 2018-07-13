@@ -1,192 +1,288 @@
 package org.jabref.gui;
 
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
+
+import javax.swing.SwingUtilities;
 
 import org.jabref.Globals;
-import org.jabref.gui.collab.FileUpdatePanel;
-import org.jabref.gui.groups.GroupSidePane;
-import org.jabref.gui.importer.fetcher.GeneralFetcher;
-import org.jabref.gui.openoffice.OpenOfficeSidePanel;
-import org.jabref.logic.openoffice.OpenOfficePreferences;
+import org.jabref.gui.maintable.MainTable;
 import org.jabref.preferences.JabRefPreferences;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
- * Manages which {@link SidePaneComponent}s are shown.
+ * Manages visibility of SideShowComponents in a given newly constructed
+ * sidePane.
  */
 public class SidePaneManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SidePaneManager.class);
 
-    private final SidePane sidePane;
-    private final Map<SidePaneType, SidePaneComponent> components = new LinkedHashMap<>();
-    private final List<SidePaneComponent> visibleComponents = new LinkedList<>();
-    private final JabRefPreferences preferences;
+    private final JabRefFrame frame;
 
-    public SidePaneManager(JabRefPreferences preferences, JabRefFrame frame) {
-        this.preferences = preferences;
-        this.sidePane = new SidePane();
+    private final SidePane sidep;
 
-        OpenOfficePreferences openOfficePreferences = preferences.getOpenOfficePreferences();
-        Stream.of(
-                  new FileUpdatePanel(this),
-                  new GroupSidePane(this, preferences, frame.getDialogService()),
-                  new GeneralFetcher(this, preferences, frame),
-                  new OpenOfficeSidePanel(this, openOfficePreferences, frame))
-              .forEach(pane -> components.put(pane.getType(), pane));
+    private final Map<Class<? extends SidePaneComponent>, SidePaneComponent> components = new LinkedHashMap<>();
 
-        if (preferences.getBoolean(JabRefPreferences.GROUP_SIDEPANE_VISIBLE)) {
-            show(SidePaneType.GROUPS);
-        }
+    private final List<SidePaneComponent> visible = new LinkedList<>();
 
-        if (openOfficePreferences.getShowPanel()) {
-            show(SidePaneType.OPEN_OFFICE);
-        }
-
-        updateView();
+    public SidePaneManager(JabRefFrame frame) {
+        this.frame = frame;
+        /*
+         * Change by Morten Alver 2005.12.04: By postponing the updating of the
+         * side pane components, we get rid of the annoying latency when
+         * switching tabs:
+         */
+        frame.getTabbedPane().addChangeListener(event -> SwingUtilities.invokeLater(
+                () -> setActiveBasePanel(SidePaneManager.this.frame.getCurrentBasePanel())));
+        sidep = new SidePane();
+        sidep.setVisible(false);
     }
 
-    public SidePane getPane() {
-        return sidePane;
+    public SidePane getPanel() {
+        return sidep;
     }
 
-    public boolean isComponentVisible(SidePaneType type) {
-        return visibleComponents.contains(getComponent(type));
+    public synchronized <T extends SidePaneComponent> boolean hasComponent(Class<T> sidePaneComponent) {
+        return components.containsKey(sidePaneComponent);
     }
 
-    public SidePaneComponent getComponent(SidePaneType type) {
-        SidePaneComponent component = components.get(type);
+    public synchronized <T extends SidePaneComponent> boolean isComponentVisible(Class<T> sidePaneComponent) {
+        SidePaneComponent component = components.get(sidePaneComponent);
         if (component == null) {
-            throw new IllegalStateException("Side component " + type + " not registered.");
+            return false;
         } else {
-            return component;
+            return visible.contains(component);
         }
     }
 
     /**
-     * If the given component is visible it will be hidden and the other way around.
+     * If panel is visible it will be hidden and the other way around
      */
-    public void toggle(SidePaneType type) {
-        if (isComponentVisible(type)) {
-            hide(type);
+    public synchronized <T extends SidePaneComponent> void toggle(Class<T> sidePaneComponent) {
+        if (isComponentVisible(sidePaneComponent)) {
+            hide(sidePaneComponent);
         } else {
-            show(type);
+            show(sidePaneComponent);
         }
     }
 
     /**
-     * Makes sure that the given component is visible.
+     * If panel is hidden it will be shown and focused
+     * If panel is visible but not focused it will be focused
+     * If panel is visible and focused it will be hidden
      */
-    public void show(SidePaneType type) {
-        SidePaneComponent component = getComponent(type);
-        if (!visibleComponents.contains(component)) {
-            // Add the new component
-            visibleComponents.add(component);
+    public synchronized <T extends SidePaneComponent> void toggleThreeWay(Class<T> sidePaneComponent) {
+        boolean isPanelFocused = Globals.getFocusListener().getFocused() == components.get(sidePaneComponent);
+        if (isComponentVisible(sidePaneComponent) && isPanelFocused) {
+            hide(sidePaneComponent);
+        } else {
+            show(sidePaneComponent);
+        }
+    }
+
+    public synchronized <T extends SidePaneComponent> void show(Class<T> sidePaneComponent) {
+        SidePaneComponent component = components.get(sidePaneComponent);
+        if (component == null) {
+            LOGGER.warn("Side pane component '" + sidePaneComponent + "' unknown.");
+        } else {
+            show(component);
+        }
+    }
+
+    public synchronized <T extends SidePaneComponent> void hide(Class<T> sidePaneComponent) {
+        SidePaneComponent component = components.get(sidePaneComponent);
+        if (component == null) {
+            LOGGER.warn("Side pane component '" + sidePaneComponent + "' unknown.");
+        } else {
+            hideComponent(component);
+            if (frame.getCurrentBasePanel() != null) {
+                MainTable mainTable = frame.getCurrentBasePanel().getMainTable();
+                mainTable.setSelected(mainTable.getSelectedRow());
+                mainTable.requestFocus();
+            }
+        }
+    }
+
+    public synchronized void register(SidePaneComponent comp) {
+        components.put(comp.getClass(), comp);
+    }
+
+    private synchronized void show(SidePaneComponent component) {
+        if (!visible.contains(component)) {
+            // Put the new component at the top of the group
+            visible.add(0, component);
 
             // Sort the visible components by their preferred position
-            visibleComponents.sort(new PreferredIndexSort());
+            Collections.sort(visible, new PreferredIndexSort());
 
             updateView();
+            component.componentOpening();
+        }
+        Globals.getFocusListener().setFocused(component);
+        component.grabFocus();
+    }
 
-            component.afterOpening();
+    public synchronized <T extends SidePaneComponent> SidePaneComponent getComponent(Class<T> sidePaneComponent) {
+        return components.get(sidePaneComponent);
+    }
+
+    public synchronized void hideComponent(SidePaneComponent comp) {
+        if (visible.contains(comp)) {
+            comp.componentClosing();
+            visible.remove(comp);
+            updateView();
         }
     }
 
-    /**
-     * Makes sure that the given component is not visible.
-     */
-    public void hide(SidePaneType type) {
-        SidePaneComponent component = getComponent(type);
-        if (visibleComponents.contains(component)) {
-            component.beforeClosing();
-
-            visibleComponents.remove(component);
-
+    public synchronized <T extends SidePaneComponent> void hideComponent(Class<T> sidePaneComponent) {
+        SidePaneComponent component = components.get(sidePaneComponent);
+        if (component == null) {
+            return;
+        }
+        if (visible.contains(component)) {
+            component.componentClosing();
+            visible.remove(component);
             updateView();
         }
     }
 
-    /**
-     * Stores the current configuration of visible components in the preferences,
-     * so that we show components at the preferred position next time.
-     */
+    private static Map<Class<? extends SidePaneComponent>, Integer> getPreferredPositions() {
+        Map<Class<? extends SidePaneComponent>, Integer> preferredPositions = new HashMap<>();
+
+        List<String> componentNames = Globals.prefs.getStringList(JabRefPreferences.SIDE_PANE_COMPONENT_NAMES);
+        List<String> componentPositions = Globals.prefs
+                .getStringList(JabRefPreferences.SIDE_PANE_COMPONENT_PREFERRED_POSITIONS);
+
+        for (int i = 0; i < componentNames.size(); ++i) {
+            String componentName = componentNames.get(i);
+            try {
+                Class<? extends SidePaneComponent> componentClass = (Class<? extends SidePaneComponent>) Class.forName(componentName);
+                preferredPositions.put(componentClass, Integer.parseInt(componentPositions.get(i)));
+            } catch (ClassNotFoundException e) {
+                LOGGER.debug("Following side pane could not be found: " + componentName, e);
+            } catch (ClassCastException e) {
+                LOGGER.debug("Following Class is no side pane: '" + componentName, e);
+            } catch (NumberFormatException e) {
+                LOGGER.debug("Invalid number format for side pane component '" + componentName + "'.", e);
+            }
+        }
+
+        return preferredPositions;
+    }
+
     private void updatePreferredPositions() {
-        Map<SidePaneType, Integer> preferredPositions = preferences.getSidePanePreferredPositions();
+        Map<Class<? extends SidePaneComponent>, Integer> preferredPositions = getPreferredPositions();
 
-        // Use the currently shown positions of all visible components
+        // Update the preferred positions of all visible components
         int index = 0;
-        for (SidePaneComponent comp : visibleComponents) {
-            preferredPositions.put(comp.getType(), index);
+        for (SidePaneComponent comp : visible) {
+            preferredPositions.put(comp.getClass(), index);
             index++;
         }
-        preferences.storeSidePanePreferredPositions(preferredPositions);
+
+        // Split the map into a pair of parallel String lists suitable for storage
+        List<String> tmpComponentNames = preferredPositions.keySet().parallelStream()
+                .map(Class::getName)
+                .collect(Collectors.toList());
+
+        List<String> componentPositions = preferredPositions.values().stream().map(Object::toString)
+                .collect(Collectors.toList());
+
+        Globals.prefs.putStringList(JabRefPreferences.SIDE_PANE_COMPONENT_NAMES, tmpComponentNames);
+        Globals.prefs.putStringList(JabRefPreferences.SIDE_PANE_COMPONENT_PREFERRED_POSITIONS, componentPositions);
     }
 
-    /**
-     * Moves the given component up.
-     */
-    public void moveUp(SidePaneComponent component) {
-        if (visibleComponents.contains(component)) {
-            int currentPosition = visibleComponents.indexOf(component);
-            if (currentPosition > 0) {
-                int newPosition = currentPosition - 1;
-                visibleComponents.remove(currentPosition);
-                visibleComponents.add(newPosition, component);
-
-                updatePreferredPositions();
-                updateView();
-            }
-        }
-    }
 
     /**
-     * Moves the given component down.
-     */
-    public void moveDown(SidePaneComponent comp) {
-        if (visibleComponents.contains(comp)) {
-            int currentPosition = visibleComponents.indexOf(comp);
-            if (currentPosition < (visibleComponents.size() - 1)) {
-                int newPosition = currentPosition + 1;
-                visibleComponents.remove(currentPosition);
-                visibleComponents.add(newPosition, comp);
-
-                updatePreferredPositions();
-                updateView();
-            }
-        }
-    }
-
-    /**
-     * Updates the view to reflect changes to visible components.
-     */
-    private void updateView() {
-        sidePane.setComponents(visibleComponents);
-
-        if (visibleComponents.isEmpty()) {
-            sidePane.setVisible(false);
-        } else {
-            sidePane.setVisible(true);
-        }
-    }
-
-    /**
-     * Helper class for sorting visible components based on their preferred position.
+     * Helper class for sorting visible components based on their preferred position
      */
     private class PreferredIndexSort implements Comparator<SidePaneComponent> {
 
-        private final Map<SidePaneType, Integer> preferredPositions;
+        private final Map<Class<? extends SidePaneComponent>, Integer> preferredPositions;
+
 
         public PreferredIndexSort() {
-            preferredPositions = Globals.prefs.getSidePanePreferredPositions();
+            preferredPositions = getPreferredPositions();
         }
 
         @Override
         public int compare(SidePaneComponent comp1, SidePaneComponent comp2) {
-            int pos1 = preferredPositions.getOrDefault(comp1.getType(), 0);
-            int pos2 = preferredPositions.getOrDefault(comp2.getType(), 0);
-            return Integer.compare(pos1, pos2);
+            int pos1 = preferredPositions.getOrDefault(comp1.getClass(), 0);
+            int pos2 = preferredPositions.getOrDefault(comp2.getClass(), 0);
+            return Integer.valueOf(pos1).compareTo(pos2);
+        }
+    }
+
+    public synchronized void moveUp(SidePaneComponent comp) {
+        if (visible.contains(comp)) {
+            int currIndex = visible.indexOf(comp);
+            if (currIndex > 0) {
+                int newIndex = currIndex - 1;
+                visible.remove(currIndex);
+                visible.add(newIndex, comp);
+
+                updatePreferredPositions();
+                updateView();
+            }
+        }
+    }
+
+    public synchronized void moveDown(SidePaneComponent comp) {
+        if (visible.contains(comp)) {
+            int currIndex = visible.indexOf(comp);
+            if (currIndex < (visible.size() - 1)) {
+                int newIndex = currIndex + 1;
+                visible.remove(currIndex);
+                visible.add(newIndex, comp);
+
+                updatePreferredPositions();
+                updateView();
+            }
+        }
+    }
+
+    public synchronized <T extends SidePaneComponent> void unregisterComponent(Class<T> sidePaneComponent) {
+        components.remove(sidePaneComponent);
+    }
+
+    /**
+     * Update all side pane components to show information from the given
+     * BasePanel.
+     *
+     * @param panel
+     */
+    private synchronized void setActiveBasePanel(BasePanel panel) {
+        for (SidePaneComponent component : components.values()) {
+            component.setActiveBasePanel(panel);
+        }
+    }
+
+    public synchronized void updateView() {
+        sidep.setComponents(visible);
+        if (visible.isEmpty()) {
+            if (sidep.isVisible()) {
+                Globals.prefs.putInt(JabRefPreferences.SIDE_PANE_WIDTH, frame.getSplitPane().getDividerLocation());
+            }
+            sidep.setVisible(false);
+        } else {
+            boolean wasVisible = sidep.isVisible();
+            sidep.setVisible(true);
+            if (!wasVisible) {
+                int width = Globals.prefs.getInt(JabRefPreferences.SIDE_PANE_WIDTH);
+                if (width > 0) {
+                    frame.getSplitPane().setDividerLocation(width);
+                } else {
+                    frame.getSplitPane().setDividerLocation(getPanel().getPreferredSize().width);
+                }
+            }
         }
     }
 }

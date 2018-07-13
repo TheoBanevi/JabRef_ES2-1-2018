@@ -8,7 +8,7 @@ import org.jabref.model.cleanup.Formatter;
 /**
  * Replaces three or more authors with and others
  */
-public class MinifyNameListFormatter extends Formatter {
+public class MinifyNameListFormatter implements Formatter {
     @Override
     public String getName() {
         return Localization.lang("Minify list of person names");

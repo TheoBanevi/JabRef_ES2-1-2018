@@ -46,8 +46,8 @@ import com.jgoodies.forms.layout.FormLayout;
 
 public class DatabasePropertiesDialog extends JabRefDialog {
 
-    private final MetaData metaData;
-    private final BasePanel panel;
+    private MetaData metaData;
+    private BasePanel panel;
     private final JComboBox<Charset> encoding;
     private final JButton ok;
     private final JButton cancel;
@@ -69,15 +69,18 @@ public class DatabasePropertiesDialog extends JabRefDialog {
 
     private FieldFormatterCleanupsPanel fieldFormatterCleanupsPanel;
 
-    public DatabasePropertiesDialog(JFrame parent, BasePanel panel) {
+    public DatabasePropertiesDialog(JFrame parent) {
         super(parent, Localization.lang("Library properties"), true, DatabasePropertiesDialog.class);
         encoding = new JComboBox<>();
         encoding.setModel(new DefaultComboBoxModel<>(Encodings.ENCODINGS));
         ok = new JButton(Localization.lang("OK"));
         cancel = new JButton(Localization.lang("Cancel"));
+        init();
+    }
+
+    public void setPanel(BasePanel panel) {
         this.panel = panel;
         this.metaData = panel.getBibDatabaseContext().getMetaData();
-        init();
     }
 
     public void updateEnableStatus() {
@@ -160,7 +163,7 @@ public class DatabasePropertiesDialog extends JabRefDialog {
         };
         ActionMap am = builder.getPanel().getActionMap();
         InputMap im = builder.getPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        im.put(Globals.getKeyPrefs().getKey(KeyBinding.CLOSE), "close");
+        im.put(Globals.getKeyPrefs().getKey(KeyBinding.CLOSE_DIALOG), "close");
         am.put("close", closeAction);
 
         ok.addActionListener(e -> {

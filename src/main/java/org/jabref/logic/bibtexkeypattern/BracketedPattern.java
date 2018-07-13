@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
  * BibTeX entry "@Article{ authors = {O. Kitsune}, year = {2017}, pages={123-6}}".
  */
 public class BracketedPattern {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BracketedPattern.class);
 
     private static final String STARTING_CAPITAL_PATTERN = "[^A-Z]";
@@ -294,8 +295,7 @@ public class BracketedPattern {
             } else if ("fulltitle".equals(val)) {
                 return entry.getResolvedFieldOrAlias(FieldName.TITLE, database).orElse("");
             } else if ("shorttitle".equals(val)) {
-                return getTitleWords(3,
-                        removeSmallWords(entry.getResolvedFieldOrAlias(FieldName.TITLE, database).orElse("")));
+                return getTitleWords(3, entry.getResolvedFieldOrAlias(FieldName.TITLE, database).orElse(""));
             } else if ("shorttitleINI".equals(val)) {
                 return keepLettersAndDigitsOnly(
                         applyModifiers(getTitleWordsWithSpaces(3, entry.getResolvedFieldOrAlias(FieldName.TITLE, database).orElse("")),

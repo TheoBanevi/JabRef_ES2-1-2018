@@ -1,44 +1,61 @@
 package org.jabref.gui.entryeditor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
+import org.jabref.Globals;
 import org.jabref.preferences.JabRefPreferences;
 
 /**
- * Class for creating the information about customizable entry editor tabs.
+ * Class for holding the information about customizable entry editor tabs.
  */
 public final class EntryEditorTabList {
 
-    private EntryEditorTabList() {
+    private List<List<String>> list;
+    private List<String> names;
 
+    public EntryEditorTabList() {
+        init();
     }
 
-    public static Map<String, List<String>> create(JabRefPreferences preferences) {
-        Map<String, List<String>> tabs = new TreeMap<>();
+    private void init() {
+        list = new ArrayList<>();
+        names = new ArrayList<>();
         int i = 0;
         String name;
-        if (preferences.hasKey(JabRefPreferences.CUSTOM_TAB_NAME + 0)) {
+        if (Globals.prefs.hasKey(JabRefPreferences.CUSTOM_TAB_NAME + 0)) {
             // The user has modified from the default values:
-            while (preferences.hasKey(JabRefPreferences.CUSTOM_TAB_NAME + i)) {
-                name = preferences.get(JabRefPreferences.CUSTOM_TAB_NAME + i);
+            while (Globals.prefs.hasKey(JabRefPreferences.CUSTOM_TAB_NAME + i)) {
+                name = Globals.prefs.get(JabRefPreferences.CUSTOM_TAB_NAME + i);
                 List<String> entry = Arrays
-                        .asList(preferences.get(JabRefPreferences.CUSTOM_TAB_FIELDS + i).split(";"));
-                tabs.put(name, entry);
+                        .asList(Globals.prefs.get(JabRefPreferences.CUSTOM_TAB_FIELDS + i).split(";"));
+                names.add(name);
+                list.add(entry);
                 i++;
             }
         } else {
             // Nothing set, so we use the default values:
-            while (preferences.get(JabRefPreferences.CUSTOM_TAB_NAME + "_def" + i) != null) {
-                name = preferences.get(JabRefPreferences.CUSTOM_TAB_NAME + "_def" + i);
+            while (Globals.prefs.get(JabRefPreferences.CUSTOM_TAB_NAME + "_def" + i) != null) {
+                name = Globals.prefs.get(JabRefPreferences.CUSTOM_TAB_NAME + "_def" + i);
                 List<String> entry = Arrays
-                        .asList(preferences.get(JabRefPreferences.CUSTOM_TAB_FIELDS + "_def" + i).split(";"));
-                tabs.put(name, entry);
+                        .asList(Globals.prefs.get(JabRefPreferences.CUSTOM_TAB_FIELDS + "_def" + i).split(";"));
+                names.add(name);
+                list.add(entry);
                 i++;
             }
         }
-        return tabs;
+    }
+
+    public int getTabCount() {
+        return list.size();
+    }
+
+    public String getTabName(int tab) {
+        return names.get(tab);
+    }
+
+    public List<String> getTabFields(int tab) {
+        return list.get(tab);
     }
 }

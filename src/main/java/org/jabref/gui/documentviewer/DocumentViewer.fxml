@@ -12,10 +12,10 @@
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
-<?import org.jabref.gui.icon.JabRefIconView?>
+<?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
 <DialogPane xmlns:fx="http://javafx.com/fxml/1" depthTest="DISABLE" prefHeight="600.0" prefWidth="750.0"
             xmlns="http://javafx.com/javafx/8.0.112"
-            fx:controller="org.jabref.gui.documentviewer.DocumentViewerView">
+            fx:controller="org.jabref.gui.documentviewer.DocumentViewerController">
     <content>
         <BorderPane fx:id="mainPane">
             <fx:define>
@@ -48,7 +48,7 @@
                     <HBox alignment="CENTER" spacing="5.0" HBox.hgrow="ALWAYS">
                         <Button onAction="#previousPage" styleClass="flatButton">
                             <graphic>
-                                <JabRefIconView glyph="PREVIOUS_LEFT"/>
+                                <MaterialDesignIconView glyphName="CHEVRON_LEFT"/>
                             </graphic>
                             <tooltip>
                                 <Tooltip text="%Previous page"/>
@@ -59,7 +59,7 @@
                         <Label fx:id="maxPages"/>
                         <Button onAction="#nextPage" styleClass="flatButton">
                             <graphic>
-                                <JabRefIconView glyph="NEXT_RIGHT"/>
+                                <MaterialDesignIconView glyphName="CHEVRON_RIGHT"/>
                             </graphic>
                             <tooltip>
                                 <Tooltip text="%Next page"/>
@@ -69,7 +69,7 @@
                     <HBox fx:id="zoomBar" alignment="CENTER_RIGHT">
                         <Button styleClass="flatButton" onAction="#fitWidth">
                             <graphic>
-                                <JabRefIconView glyph="FIT_WIDTH"/>
+                                <MaterialDesignIconView glyphName="ARROW_EXPAND_ALL"/>
                             </graphic>
                             <tooltip>
                                 <Tooltip text="%Fit width"/>
@@ -77,7 +77,7 @@
                         </Button>
                         <Button styleClass="flatButton" onAction="#fitSinglePage">
                             <graphic>
-                                <JabRefIconView glyph="FIT_SINGLE_PAGE"/>
+                                <MaterialDesignIconView glyphName="NOTE"/>
                             </graphic>
                             <tooltip>
                                 <Tooltip text="%Fit a single page"/>
@@ -85,7 +85,7 @@
                         </Button>
                         <Button styleClass="flatButton" onAction="#zoomOut">
                             <graphic>
-                                <JabRefIconView glyph="ZOOM_OUT"/>
+                                <MaterialDesignIconView glyphName="MAGNIFY_MINUS"/>
                             </graphic>
                             <tooltip>
                                 <Tooltip text="%Zoom out"/>
@@ -93,7 +93,7 @@
                         </Button>
                         <Button styleClass="flatButton" onAction="#zoomIn">
                             <graphic>
-                                <JabRefIconView glyph="ZOOM_IN"/>
+                                <MaterialDesignIconView glyphName="MAGNIFY_PLUS"/>
                             </graphic>
                             <tooltip>
                                 <Tooltip text="%Zoom in"/>

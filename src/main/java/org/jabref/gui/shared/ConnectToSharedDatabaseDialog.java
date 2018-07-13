@@ -24,8 +24,8 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
@@ -36,6 +36,7 @@ import org.jabref.JabRefException;
 import org.jabref.JabRefGUI;
 import org.jabref.gui.BasePanel;
 import org.jabref.gui.DialogService;
+import org.jabref.gui.FXDialogService;
 import org.jabref.gui.JabRefDialog;
 import org.jabref.gui.JabRefFrame;
 import org.jabref.gui.exporter.SaveDatabaseAction;
@@ -49,7 +50,7 @@ import org.jabref.logic.shared.DBMSConnectionProperties;
 import org.jabref.logic.shared.exception.InvalidDBMSConnectionPropertiesException;
 import org.jabref.logic.shared.prefs.SharedDatabasePreferences;
 import org.jabref.logic.shared.security.Password;
-import org.jabref.logic.util.StandardFileType;
+import org.jabref.logic.util.FileType;
 import org.jabref.model.database.BibDatabaseContext;
 import org.jabref.model.database.shared.DBMSType;
 import org.jabref.model.database.shared.DatabaseLocation;
@@ -102,22 +103,22 @@ public class ConnectToSharedDatabaseDialog extends JabRefDialog {
      * @param frame the JabRef Frame
      */
     public ConnectToSharedDatabaseDialog(JabRefFrame frame) {
-        super((JFrame) null, Localization.lang("Connect to shared database"), ConnectToSharedDatabaseDialog.class);
+        super(frame, Localization.lang("Connect to shared database"), ConnectToSharedDatabaseDialog.class);
         this.frame = frame;
         initLayout();
         updateEnableState();
         applyPreferences();
         setupActions();
         pack();
+        setLocationRelativeTo(frame);
     }
 
     public void openSharedDatabase() {
 
         if (isSharedDatabaseAlreadyPresent()) {
-
-            frame.getDialogService().showWarningDialogAndWait(Localization.lang("Shared database connection"),
-                    Localization.lang("You are already connected to a database using entered connection details."));
-
+            JOptionPane.showMessageDialog(ConnectToSharedDatabaseDialog.this,
+                    Localization.lang("You are already connected to a database using entered connection details."),
+                    Localization.lang("Warning"), JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -126,13 +127,10 @@ public class ConnectToSharedDatabaseDialog extends JabRefDialog {
             Path localFilePath = Paths.get(fileLocationField.getText());
 
             if (Files.exists(localFilePath) && !Files.isDirectory(localFilePath)) {
-
-                boolean overwriteFilePressed = frame.getDialogService().showConfirmationDialogAndWait(Localization.lang("Existing file"),
+                int answer = JOptionPane.showConfirmDialog(this,
                         Localization.lang("'%0' exists. Overwrite file?", localFilePath.getFileName().toString()),
-                        Localization.lang("Overwrite file"),
-                        Localization.lang("Cancel"));
-
-                if (!overwriteFilePressed) {
+                        Localization.lang("Existing file"), JOptionPane.YES_NO_OPTION);
+                if (answer == JOptionPane.NO_OPTION) {
                     fileLocationField.requestFocus();
                     return;
                 }
@@ -155,9 +153,8 @@ public class ConnectToSharedDatabaseDialog extends JabRefDialog {
 
             return; // setLoadingConnectButtonText(false) should not be reached regularly.
         } catch (SQLException | InvalidDBMSConnectionPropertiesException exception) {
-
-            DefaultTaskExecutor.runInJavaFXThread(() -> frame.getDialogService().showErrorDialogAndWait(Localization.lang("Connection error"), exception));
-
+            JOptionPane.showMessageDialog(ConnectToSharedDatabaseDialog.this, exception.getMessage(),
+                    Localization.lang("Connection error"), JOptionPane.ERROR_MESSAGE);
         } catch (DatabaseNotSupportedException exception) {
             new MigrationHelpDialog(this).setVisible(true);
         }
@@ -187,7 +184,8 @@ public class ConnectToSharedDatabaseDialog extends JabRefDialog {
 
                     openSharedDatabase();
                 } catch (JabRefException exception) {
-                    DefaultTaskExecutor.runInJavaFXThread(() -> frame.getDialogService().showErrorDialogAndWait(Localization.lang("Warning"), exception));
+                    JOptionPane.showMessageDialog(ConnectToSharedDatabaseDialog.this, exception.getMessage(),
+                            Localization.lang("Warning"), JOptionPane.WARNING_MESSAGE);
                 }
             }
         };
@@ -471,11 +469,10 @@ public class ConnectToSharedDatabaseDialog extends JabRefDialog {
 
     private void showFileChooser() {
         FileDialogConfiguration fileDialogConfiguration = new FileDialogConfiguration.Builder()
-                .addExtensionFilter(String.format("%1s %2s", "BibTex", Localization.lang("Library")), StandardFileType.BIBTEX_DB)
-                .withDefaultExtension(String.format("%1s %2s", "BibTex", Localization.lang("Library")), StandardFileType.BIBTEX_DB)
-                .withInitialDirectory(Globals.prefs.get(JabRefPreferences.WORKING_DIRECTORY))
-                .build();
-        DialogService ds = frame.getDialogService();
+                .addExtensionFilter(FileType.BIBTEX_DB)
+                .withDefaultExtension(FileType.BIBTEX_DB)
+                .withInitialDirectory(Globals.prefs.get(JabRefPreferences.WORKING_DIRECTORY)).build();
+        DialogService ds = new FXDialogService();
 
         Optional<Path> path = DefaultTaskExecutor
                 .runInJavaFXThread(() -> ds.showFileOpenDialog(fileDialogConfiguration));

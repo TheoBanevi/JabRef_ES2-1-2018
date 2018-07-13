@@ -16,9 +16,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.util.StringConverter;
 
+import org.jabref.gui.util.ControlHelper;
 import org.jabref.model.strings.StringUtil;
-
-import com.airhacks.afterburner.views.ViewLoader;
 
 /**
  * Field editor that provides various pre-defined options as a drop-down combobox.
@@ -36,9 +35,7 @@ public class TagBar<T> extends HBox {
         tags.addListener(this::onTagsChanged);
 
         // Load FXML
-        ViewLoader.view(this)
-                  .root(this)
-                  .load();
+        ControlHelper.loadFXMLForControl(this);
         getStylesheets().add(0, TagBar.class.getResource("TagBar.css").toExternalForm());
     }
 

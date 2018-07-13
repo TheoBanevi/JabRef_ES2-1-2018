@@ -111,6 +111,7 @@ public class PdfImporter {
                 if (!XmpUtilShared.hasMetadata(Paths.get(fileName), Globals.prefs.getXMPPreferences())) {
                     importDialog.disableXMPChoice();
                 }
+                importDialog.setLocationRelativeTo(frame);
                 importDialog.showDialog();
                 doNotShowAgain = importDialog.isDoNotShowAgain();
             }
@@ -132,7 +133,7 @@ public class PdfImporter {
                     if (dropRow >= 0) {
                         dfh.linkPdfToEntry(fileName, entryTable, dropRow);
                     } else {
-                        entryTable.getSelectedEntries().forEach(entry -> dfh.linkPdfToEntry(fileName, entry));
+                        dfh.linkPdfToEntry(fileName, entryTable, entryTable.getSelectedRow());
                     }
                     break;
                 default:
@@ -214,7 +215,7 @@ public class PdfImporter {
         DroppedFileHandler dfh = new DroppedFileHandler(frame, panel);
         dfh.linkPdfToEntry(fileName, entry);
 
-        SwingUtilities.invokeLater(() -> panel.clearAndSelect(entry));
+        SwingUtilities.invokeLater(() -> panel.highlightEntry(entry));
 
         if (Globals.prefs.getBoolean(JabRefPreferences.AUTO_OPEN_FORM)) {
             panel.showAndEdit(entry);
@@ -225,6 +226,8 @@ public class PdfImporter {
     private Optional<BibEntry> createNewEntry() {
         // Find out what type is desired
         EntryTypeDialog etd = new EntryTypeDialog(frame);
+        // We want to center the dialog, to make it look nicer.
+        etd.setLocationRelativeTo(frame);
         etd.setVisible(true);
         EntryType type = etd.getChoice();
 
@@ -239,7 +242,7 @@ public class PdfImporter {
                 UpdateField.setAutomaticFields(list, true, true, Globals.prefs.getUpdateFieldPreferences());
 
                 // Create an UndoableInsertEntry object.
-                panel.getUndoManager().addEdit(new UndoableInsertEntry(panel.getDatabase(), bibEntry));
+                panel.getUndoManager().addEdit(new UndoableInsertEntry(panel.getDatabase(), bibEntry, panel));
                 panel.output(Localization.lang("Added new") + " '" + type.getName().toLowerCase(Locale.ROOT) + "' "
                         + Localization.lang("entry") + ".");
 

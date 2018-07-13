@@ -1,35 +1,43 @@
 package org.jabref.gui.menus;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuItem;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 
 import org.jabref.JabRefExecutorService;
-import org.jabref.gui.DialogService;
 import org.jabref.gui.JabRefFrame;
 import org.jabref.logic.l10n.Localization;
 import org.jabref.logic.util.io.FileHistory;
 import org.jabref.preferences.JabRefPreferences;
 
-public class FileHistoryMenu extends Menu {
+public class FileHistoryMenu extends JMenu implements ActionListener {
 
     private final FileHistory history;
     private final JabRefFrame frame;
-    private final JabRefPreferences preferences;
-    private final DialogService dialogService;
+    private final JabRefPreferences prefs;
 
-    public FileHistoryMenu(JabRefPreferences preferences, JabRefFrame frame) {
-        setText(Localization.lang("Recent libraries"));
+    public FileHistoryMenu(JabRefPreferences prefs, JabRefFrame frame) {
+        String name = Localization.menuTitle("Recent libraries");
+        int i = name.indexOf('&');
+        if (i >= 0) {
+            setText(name.substring(0, i) + name.substring(i + 1));
+            char mnemonic = Character.toUpperCase(name.charAt(i + 1));
+            setMnemonic((int) mnemonic);
+        } else {
+            setText(name);
+        }
 
         this.frame = frame;
-        this.preferences = preferences;
-        this.dialogService = frame.getDialogService();
-        history = preferences.getFileHistory();
+        this.prefs = prefs;
+        history = prefs.getFileHistory();
         if (history.isEmpty()) {
-            setDisable(true);
+            setEnabled(false);
         } else {
             setItems();
         }
@@ -44,36 +52,44 @@ public class FileHistoryMenu extends Menu {
     public void newFile(String filename) {
         history.newFile(filename);
         setItems();
-        setDisable(false);
+        if (!isEnabled()) {
+            setEnabled(true);
+        }
     }
 
     private void setItems() {
-        getItems().clear();
+        removeAll();
         for (int count = 0; count < history.size(); count++) {
             addItem(history.getFileName(count), count + 1);
         }
     }
 
-    private void addItem(String fileName, int num) {
+    private void addItem(String filename, int num) {
         String number = Integer.toString(num);
-        MenuItem item = new MenuItem(number + ". " + fileName);
-        item.setOnAction(event -> openFile(fileName));
-        getItems().add(item);
+        JMenuItem item = new JMenuItem(number + ". " + filename);
+        char mnemonic = Character.toUpperCase(number.charAt(0));
+        item.setMnemonic((int) mnemonic);
+        item.addActionListener(this);
+        add(item);
+        //history.addFirst(item);
     }
 
     public void storeHistory() {
-        preferences.storeFileHistory(history);
+        prefs.storeFileHistory(history);
     }
 
-    public void openFile(String fileName) {
-        final Path fileToOpen = Paths.get(fileName);
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String name = ((JMenuItem) e.getSource()).getText();
+        int pos = name.indexOf(' ');
+        name = name.substring(pos + 1);
+        final Path fileToOpen = Paths.get(name);
 
         // the existence check has to be done here (and not in open.openIt) as we have to call "removeItem" if the file does not exist
         if (!Files.exists(fileToOpen)) {
-            dialogService.showErrorDialogAndWait(
-                    Localization.lang("File not found"),
-                    Localization.lang("File not found") + ": " + fileName);
-            history.removeItem(fileName);
+            JOptionPane.showMessageDialog(frame, Localization.lang("File not found") + ": " + fileToOpen.getFileName(),
+                    Localization.lang("Error"), JOptionPane.ERROR_MESSAGE);
+            history.removeItem(name);
             setItems();
             return;
         }

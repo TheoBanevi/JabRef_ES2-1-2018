@@ -9,7 +9,7 @@ import org.jabref.logic.layout.LayoutFormatter;
 import org.jabref.logic.util.strings.UnicodeLigaturesMap;
 import org.jabref.model.cleanup.Formatter;
 
-public class ReplaceUnicodeLigaturesFormatter extends Formatter implements LayoutFormatter {
+public class ReplaceUnicodeLigaturesFormatter implements LayoutFormatter, Formatter {
 
     private Map<Pattern, String> ligaturesMap;
 

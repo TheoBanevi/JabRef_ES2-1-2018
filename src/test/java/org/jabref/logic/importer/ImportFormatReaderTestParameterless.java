@@ -16,13 +16,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class ImportFormatReaderTestParameterless {
+public class ImportFormatReaderTestParameterless {
 
     private ImportFormatReader reader;
     private final FileUpdateMonitor fileMonitor = new DummyFileUpdateMonitor();
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         reader = new ImportFormatReader();
         ImportFormatPreferences importFormatPreferences = mock(ImportFormatPreferences.class, Answers.RETURNS_DEEP_STUBS);
         when(importFormatPreferences.getEncoding()).thenReturn(StandardCharsets.UTF_8);
@@ -30,26 +30,26 @@ class ImportFormatReaderTestParameterless {
     }
 
     @Test
-    void importUnknownFormatThrowsExceptionIfNoMatchingImporterWasFound() throws Exception {
+    public void importUnknownFormatThrowsExceptionIfNoMatchingImporterWasFound() throws Exception {
         Path file = Paths.get(ImportFormatReaderTestParameterless.class.getResource("fileformat/emptyFile.xml").toURI());
-        assertThrows(ImportException.class, () -> reader.importUnknownFormat(file, fileMonitor));
+        assertThrows(NullPointerException.class, () -> reader.importUnknownFormat(file, fileMonitor));
     }
 
     @Test
-    void importUnknownFormatThrowsExceptionIfPathIsNull() throws Exception {
+    public void testNullImportUnknownFormatPath() throws Exception {
         assertThrows(NullPointerException.class, () -> reader.importUnknownFormat(null, fileMonitor));
 
     }
 
     @Test
-    void importUnknownFormatThrowsExceptionIfDataIsNull() throws Exception {
+    public void testNullImportUnknownFormatString() throws Exception {
         assertThrows(NullPointerException.class, () -> reader.importUnknownFormat(null));
 
     }
 
     @Test
-    void importFromFileWithUnknownFormatThrowsException() throws Exception {
-        assertThrows(ImportException.class, () -> reader.importFromFile("someunknownformat", Paths.get("somepath")));
+    public void importFromFileWithUnknownFormatThrowsException() throws Exception {
+        assertThrows(NullPointerException.class, () -> reader.importFromFile("someunknownformat", Paths.get("somepath")));
     }
 
 }

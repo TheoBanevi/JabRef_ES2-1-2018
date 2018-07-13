@@ -1,7 +1,6 @@
 package org.jabref.gui.keyboard;
 
 import org.jabref.logic.l10n.Localization;
-import org.jabref.model.database.BibDatabaseMode;
 
 public enum KeyBindingCategory {
 
@@ -9,7 +8,7 @@ public enum KeyBindingCategory {
     EDIT(Localization.lang("Edit")),
     SEARCH(Localization.lang("Search")),
     VIEW(Localization.lang("View")),
-    BIBTEX(BibDatabaseMode.BIBTEX.getFormattedName()),
+    BIBTEX(Localization.BIBTEX),
     QUALITY(Localization.lang("Quality")),
     TOOLS(Localization.lang("Tools"));
 

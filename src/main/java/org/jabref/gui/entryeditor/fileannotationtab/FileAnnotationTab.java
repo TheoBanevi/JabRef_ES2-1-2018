@@ -1,6 +1,5 @@
 package org.jabref.gui.entryeditor.fileannotationtab;
 
-import javafx.scene.Parent;
 import javafx.scene.control.Tooltip;
 
 import org.jabref.gui.entryeditor.EntryEditorTab;
@@ -8,8 +7,6 @@ import org.jabref.logic.l10n.Localization;
 import org.jabref.logic.pdf.FileAnnotationCache;
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.FieldName;
-
-import com.airhacks.afterburner.views.ViewLoader;
 
 public class FileAnnotationTab extends EntryEditorTab {
 
@@ -29,9 +26,6 @@ public class FileAnnotationTab extends EntryEditorTab {
 
     @Override
     protected void bindToEntry(BibEntry entry) {
-        Parent content = ViewLoader.view(new FileAnnotationTabView(entry, fileAnnotationCache))
-                                   .load()
-                                   .getView();
-        setContent(content);
+        setContent(new FileAnnotationTabView(entry, fileAnnotationCache).getView());
     }
 }

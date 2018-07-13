@@ -10,7 +10,7 @@ import org.jabref.logic.l10n.Localization;
 import org.jabref.logic.util.strings.StringLengthComparator;
 import org.jabref.model.cleanup.Formatter;
 
-public class UnitsToLatexFormatter extends Formatter {
+public class UnitsToLatexFormatter implements Formatter {
 
     private static final List<String> UNIT_LIST = Arrays.asList(
             "A", // Ampere
@@ -81,6 +81,7 @@ public class UnitsToLatexFormatter extends Formatter {
 
     private final List<String> prefixUnitCombinations;
 
+
     public UnitsToLatexFormatter() {
         prefixUnitCombinations = new ArrayList<>(
                 UnitsToLatexFormatter.UNIT_LIST.size() * UnitsToLatexFormatter.UNIT_PREFIX_LIST.size());
@@ -111,6 +112,7 @@ public class UnitsToLatexFormatter extends Formatter {
             result = result.replaceAll("([0-9])(" + listOfWord + ")", "$1\\{$2\\}"); // Only add brackets to keep case
             result = result.replaceAll("([0-9])-(" + listOfWord + ")", "$1\\\\mbox\\{-\\}\\{$2\\}"); // Replace hyphen with non-break hyphen
             result = result.replaceAll("([0-9]) (" + listOfWord + ")", "$1~\\{$2\\}"); // Replace space with a hard space
+
         }
 
         return result;
@@ -135,4 +137,5 @@ public class UnitsToLatexFormatter extends Formatter {
     public String getKey() {
         return "units_to_latex";
     }
+
 }

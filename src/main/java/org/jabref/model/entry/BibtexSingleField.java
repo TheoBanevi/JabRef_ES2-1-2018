@@ -7,8 +7,7 @@ import java.util.Set;
  * Class for keeping properties of a single BibTeX/biblatex field
  */
 public class BibtexSingleField {
-    // TODO: This constant should be moved to the gui package, probably to MainTableColumnFactory
-    public static final double DEFAULT_FIELD_LENGTH = 100;
+    public static final int DEFAULT_FIELD_LENGTH = 100;
 
     private enum FieldType {
         STANDARD,
@@ -26,7 +25,7 @@ public class BibtexSingleField {
      */
     private final Set<FieldType> fieldTypes = EnumSet.of(FieldType.DISPLAYABLE, FieldType.WRITEABLE);
 
-    private final double length;
+    private final int length;
 
     /**
      * properties contains a set of FieldProperty to e.g. tell the EntryEditor to add a specific
@@ -42,7 +41,7 @@ public class BibtexSingleField {
         this(fieldName, standardField, DEFAULT_FIELD_LENGTH);
     }
 
-    public BibtexSingleField(String fieldName, boolean standardField, double length) {
+    public BibtexSingleField(String fieldName, boolean standardField, int length) {
         this.name = fieldName;
         this.length = length;
         if (standardField) {
@@ -106,7 +105,7 @@ public class BibtexSingleField {
     /**
      * @return The maximum (expected) length of the field value; <em>not</em> the length of the field name
      */
-    public double getLength() {
+    public int getLength() {
         return this.length;
     }
 

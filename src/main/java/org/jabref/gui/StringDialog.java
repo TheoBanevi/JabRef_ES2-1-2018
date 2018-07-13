@@ -33,7 +33,6 @@ import javax.swing.undo.CompoundEdit;
 import org.jabref.Globals;
 import org.jabref.gui.actions.Actions;
 import org.jabref.gui.help.HelpAction;
-import org.jabref.gui.icon.IconTheme;
 import org.jabref.gui.keyboard.KeyBinding;
 import org.jabref.gui.undo.UndoableInsertString;
 import org.jabref.gui.undo.UndoableRemoveString;
@@ -66,7 +65,7 @@ class StringDialog extends JabRefDialog {
 
 
     public StringDialog(JabRefFrame frame, BasePanel panel, BibDatabase base) {
-        super(null, StringDialog.class);
+        super(frame, StringDialog.class);
         this.panel = panel;
         this.base = base;
 
@@ -120,7 +119,7 @@ class StringDialog extends JabRefDialog {
         am.put("remove", removeStringAction);
         im.put(Globals.getKeyPrefs().getKey(KeyBinding.SAVE_DATABASE), "save");
         am.put("save", saveAction);
-        im.put(Globals.getKeyPrefs().getKey(KeyBinding.CLOSE), "close");
+        im.put(Globals.getKeyPrefs().getKey(KeyBinding.CLOSE_DIALOG), "close");
         am.put("close", closeAction);
         im.put(Globals.getKeyPrefs().getKey(KeyBinding.HELP), "help");
         am.put("help", helpAction);
@@ -191,7 +190,7 @@ class StringDialog extends JabRefDialog {
 
 
         public SaveDatabaseAction(StringDialog parent) {
-            super("Save library", IconTheme.JabRefIcons.SAVE.getIcon());
+            super("Save library", IconTheme.JabRefIcon.SAVE.getIcon());
             putValue(Action.SHORT_DESCRIPTION, Localization.lang("Save library"));
             this.parent = parent;
         }
@@ -218,7 +217,8 @@ class StringDialog extends JabRefDialog {
             TableColumnModel cm = getColumnModel();
             cm.getColumn(0).setPreferredWidth(800);
             cm.getColumn(1).setPreferredWidth(2000);
-            getInputMap().put(Globals.getKeyPrefs().getKey(KeyBinding.CLOSE), "close");
+            sp.getViewport().setBackground(Globals.prefs.getColor(JabRefPreferences.TABLE_BACKGROUND));
+            getInputMap().put(Globals.getKeyPrefs().getKey(KeyBinding.CLOSE_DIALOG), "close");
             getActionMap().put("close", closeAction);
             getInputMap().put(Globals.getKeyPrefs().getKey(KeyBinding.HELP), "help");
             getActionMap().put("help", helpAction);
@@ -336,7 +336,7 @@ class StringDialog extends JabRefDialog {
 
 
         public NewStringAction(StringDialog parent) {
-            super("New string", IconTheme.JabRefIcons.ADD.getIcon());
+            super("New string", IconTheme.JabRefIcon.ADD.getIcon());
             putValue(Action.SHORT_DESCRIPTION, Localization.lang("New string"));
             this.parent = parent;
         }
@@ -385,7 +385,7 @@ class StringDialog extends JabRefDialog {
 
 
         public RemoveStringAction(StringDialog parent) {
-            super("Remove selected strings", IconTheme.JabRefIcons.REMOVE.getIcon());
+            super("Remove selected strings", IconTheme.JabRefIcon.REMOVE.getIcon());
             putValue(Action.SHORT_DESCRIPTION, Localization.lang("Remove selected strings"));
             this.parent = parent;
         }
@@ -430,7 +430,7 @@ class StringDialog extends JabRefDialog {
     class UndoAction extends AbstractAction {
 
         public UndoAction() {
-            super("Undo", IconTheme.JabRefIcons.UNDO.getIcon());
+            super("Undo", IconTheme.JabRefIcon.UNDO.getIcon());
             putValue(Action.SHORT_DESCRIPTION, Localization.lang("Undo"));
         }
 
@@ -443,7 +443,7 @@ class StringDialog extends JabRefDialog {
     class RedoAction extends AbstractAction {
 
         public RedoAction() {
-            super("Redo", IconTheme.JabRefIcons.REDO.getIcon());
+            super("Redo", IconTheme.JabRefIcon.REDO.getIcon());
             putValue(Action.SHORT_DESCRIPTION, Localization.lang("Redo"));
         }
 

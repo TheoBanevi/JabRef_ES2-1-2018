@@ -2,6 +2,7 @@ package org.jabref.gui.mergeentries;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.jabref.JabRefGUI;
 import org.jabref.gui.BasePanel;
@@ -48,5 +49,11 @@ public class FetchAndMergeEntry {
                 panel.frame().setStatus(Localization.lang("No %0 found", FieldName.getDisplayName(field)));
             }
         }
+    }
+
+    public static String getDisplayNameOfSupportedFields() {
+        return FieldName.orFields(SUPPORTED_FIELDS.stream()
+                .map(FieldName::getDisplayName)
+                .collect(Collectors.toList()));
     }
 }

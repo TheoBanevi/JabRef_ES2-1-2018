@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.jabref.Globals;
 import org.jabref.logic.l10n.Localization;
-import org.jabref.model.database.BibDatabaseMode;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -174,7 +173,7 @@ public class JabRefCLI {
         options.addOption(
                 Option.builder("ib")
                       .longOpt("importBibtex")
-                        .desc(String.format("%s: %s[,importBibtex bibtexString]", Localization.lang("Import") + " " + BibDatabaseMode.BIBTEX.getFormattedName(), Localization.lang("filename")))
+                      .desc(String.format("%s: %s[,importBibtex bibtexString]", Localization.lang("Import") + " " + Localization.BIBTEX, Localization.lang("filename")))
                       .hasArg()
                       .argName("FILE")
                       .build());

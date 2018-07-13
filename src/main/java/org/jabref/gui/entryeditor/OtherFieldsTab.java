@@ -8,9 +8,9 @@ import javax.swing.undo.UndoManager;
 
 import javafx.scene.control.Tooltip;
 
-import org.jabref.gui.DialogService;
+import org.jabref.Globals;
+import org.jabref.gui.IconTheme;
 import org.jabref.gui.autocompleter.SuggestionProviders;
-import org.jabref.gui.icon.IconTheme;
 import org.jabref.logic.l10n.Localization;
 import org.jabref.model.database.BibDatabaseContext;
 import org.jabref.model.entry.BibEntry;
@@ -18,15 +18,12 @@ import org.jabref.model.entry.EntryType;
 
 public class OtherFieldsTab extends FieldsEditorTab {
 
-    private final List<String> customTabFieldNames;
-
-    public OtherFieldsTab(BibDatabaseContext databaseContext, SuggestionProviders suggestionProviders, UndoManager undoManager, List<String> customTabFieldNames, DialogService dialogService) {
-        super(false, databaseContext, suggestionProviders, undoManager, dialogService);
+    public OtherFieldsTab(BibDatabaseContext databaseContext, SuggestionProviders suggestionProviders, UndoManager undoManager) {
+        super(false, databaseContext, suggestionProviders, undoManager);
 
         setText(Localization.lang("Other fields"));
         setTooltip(new Tooltip(Localization.lang("Show remaining fields")));
-        setGraphic(IconTheme.JabRefIcons.OPTIONAL.getGraphicNode());
-        this.customTabFieldNames = customTabFieldNames;
+        setGraphic(IconTheme.JabRefIcon.OPTIONAL.getGraphicNode());
     }
 
     @Override
@@ -38,7 +35,7 @@ public class OtherFieldsTab extends FieldsEditorTab {
 
         otherFields.removeAll(entryType.getDeprecatedFields());
         otherFields.remove(BibEntry.KEY_FIELD);
-        otherFields.removeAll(customTabFieldNames);
+        otherFields.removeAll(Globals.prefs.getCustomTabFieldNames());
         return otherFields;
     }
 }

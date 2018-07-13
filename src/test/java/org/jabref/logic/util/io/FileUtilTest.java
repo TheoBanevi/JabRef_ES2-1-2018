@@ -59,6 +59,18 @@ public class FileUtilTest {
     }
 
     @Test
+    public void testGetLinkedFileNameDefaultWithLayout() {
+        // bibkey - title
+        String fileNamePattern = "\\bibtexkey\\begin{title} - \\format[RemoveBrackets]{\\title}\\end{title}";
+        BibEntry entry = new BibEntry();
+        entry.setCiteKey("1234");
+        entry.setField("title", "mytitle");
+
+        assertEquals("1234 - mytitle",
+                FileUtil.createFileNameFromPattern(null, entry, fileNamePattern, layoutFormatterPreferences));
+    }
+
+    @Test
     public void testGetLinkedFileNameDefaultFullTitle() {
         // bibkey - title
         String fileNamePattern = "[bibtexkey] - [fulltitle]";
@@ -83,6 +95,19 @@ public class FileUtilTest {
     }
 
     @Test
+    public void testGetLinkedFileNameBibTeXKeyWithLayout() {
+        // bibkey
+        String fileNamePattern = "\\bibtexkey";
+        BibEntry entry = new BibEntry();
+        entry.setCiteKey("1234");
+        entry.setField("title", "mytitle");
+
+        assertEquals("1234",
+                FileUtil.createFileNameFromPattern(null, entry, fileNamePattern,
+                        layoutFormatterPreferences));
+    }
+
+    @Test
     public void testGetLinkedFileNameBibTeXKey() {
         // bibkey
         String fileNamePattern = "[bibtexkey]";
@@ -92,6 +117,17 @@ public class FileUtilTest {
 
         assertEquals("1234",
                 FileUtil.createFileNameFromPattern(null, entry, fileNamePattern));
+    }
+
+    @Test
+    public void testGetLinkedFileNameNoPatternWithLayout() {
+        String fileNamePattern = "";
+        BibEntry entry = new BibEntry();
+        entry.setCiteKey("1234");
+        entry.setField("title", "mytitle");
+
+        assertEquals("1234", FileUtil.createFileNameFromPattern(null, entry, fileNamePattern,
+                layoutFormatterPreferences));
     }
 
     @Test
@@ -105,12 +141,33 @@ public class FileUtilTest {
     }
 
     @Test
+    public void testGetDefaultFileNameNoPatternNoBibTeXKeyWithLayout() {
+        String fileNamePattern = "";
+        BibEntry entry = new BibEntry();
+        entry.setField("title", "mytitle");
+
+        assertEquals("default", FileUtil.createFileNameFromPattern(null, entry, fileNamePattern,
+                layoutFormatterPreferences));
+    }
+
+    @Test
     public void testGetDefaultFileNameNoPatternNoBibTeXKey() {
         String fileNamePattern = "";
         BibEntry entry = new BibEntry();
         entry.setField("title", "mytitle");
 
         assertEquals("default", FileUtil.createFileNameFromPattern(null, entry, fileNamePattern));
+    }
+
+    @Test
+    public void testGetLinkedFileNameGetKeyIfEmptyFieldWithLayout() {
+        // bibkey - title
+        String fileNamePattern = "\\begin{title} - \\format[RemoveBrackets]{\\title}\\end{title}";
+        BibEntry entry = new BibEntry();
+        entry.setCiteKey("1234");
+
+        assertEquals("1234", FileUtil.createFileNameFromPattern(null, entry, fileNamePattern,
+                layoutFormatterPreferences));
     }
 
     @Test
@@ -121,6 +178,16 @@ public class FileUtilTest {
         entry.setCiteKey("1234");
 
         assertEquals("1234", FileUtil.createFileNameFromPattern(null, entry, fileNamePattern));
+    }
+
+    @Test
+    public void testGetLinkedFileNameGetDefaultIfEmptyFieldNoKeyWithLayout() {
+        // bibkey - title
+        String fileNamePattern = "\\begin{title} - \\format[RemoveBrackets]{\\title}\\end{title}";
+        BibEntry entry = new BibEntry();
+
+        assertEquals("default", FileUtil.createFileNameFromPattern(null, entry, fileNamePattern,
+                layoutFormatterPreferences));
     }
 
     @Test
@@ -150,8 +217,13 @@ public class FileUtilTest {
     }
 
     @Test
+    public void testGetFileExtensionLowerCaseAndTrimmingFile() {
+        assertEquals("pdf", FileHelper.getFileExtension(Paths.get("test.PdF  ")).get());
+    }
+
+    @Test
     public void testGetFileExtensionMultipleDotsFile() {
-        assertEquals("pdf", FileHelper.getFileExtension(Paths.get("te.st.PdF")).get());
+        assertEquals("pdf", FileHelper.getFileExtension(Paths.get("te.st.PdF  ")).get());
     }
 
     @Test

@@ -13,7 +13,6 @@ import org.jabref.logic.exporter.TemplateExporter;
 import org.jabref.logic.journals.JournalAbbreviationLoader;
 import org.jabref.logic.layout.LayoutFormatterPreferences;
 import org.jabref.logic.util.FileType;
-import org.jabref.logic.util.StandardFileType;
 
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
@@ -89,16 +88,12 @@ public class CustomExportList {
             SavePreferences savePreferences) {
 
         String lfFileName;
-        if (filename.endsWith(".layout")) {
+        if (extension.endsWith(".layout")) {
             lfFileName = filename.substring(0, filename.length() - ".layout".length());
         } else {
             lfFileName = filename;
         }
-        if (extension.contains(".")) {
-            extension = extension.substring(extension.indexOf('.') + 1, extension.length());
-        }
-        FileType fileType = StandardFileType.newFileType(extension);
-        TemplateExporter format = new TemplateExporter(exporterName, exporterName, lfFileName, null, fileType, layoutPreferences,
+        TemplateExporter format = new TemplateExporter(exporterName, filename, lfFileName, null, FileType.parse(extension), layoutPreferences,
                 savePreferences);
         format.setCustomExport(true);
         return Optional.of(format);

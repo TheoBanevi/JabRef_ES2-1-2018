@@ -10,14 +10,14 @@ import org.jabref.model.entry.BibEntry;
 
 public abstract class Exporter {
 
-    private final String id;
-    private final String displayName;
-    private final FileType fileType;
+    private String id;
+    private String displayName;
+    private FileType fileType;
 
-    public Exporter(String id, String displayName, FileType extension) {
+    public Exporter(String id, String displayName, FileType fileType) {
         this.id = id;
         this.displayName = displayName;
-        this.fileType = extension;
+        this.fileType = fileType;
     }
 
     /**
@@ -30,7 +30,7 @@ public abstract class Exporter {
     /**
      * Returns the name of the exporter (to display to the user).
      */
-    public String getName() {
+    public String getDisplayName() {
         return displayName;
     }
 
@@ -39,11 +39,6 @@ public abstract class Exporter {
      */
     public FileType getFileType() {
         return fileType;
-    }
-
-    @Override
-    public String toString() {
-        return displayName;
     }
 
     /**
@@ -56,4 +51,7 @@ public abstract class Exporter {
      */
     public abstract void export(BibDatabaseContext databaseContext, Path file, Charset encoding, List<BibEntry> entries) throws Exception;
 
+    public String getDescription() {
+        return getFileType().getDescription();
+    }
 }

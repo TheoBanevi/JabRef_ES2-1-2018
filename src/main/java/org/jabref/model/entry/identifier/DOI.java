@@ -95,9 +95,7 @@ public class DOI implements Identifier {
      */
     public static Optional<DOI> parse(String doi) {
         try {
-            String cleanedDOI = doi.trim();
-            cleanedDOI = doi.replaceAll(" ", "");
-            return Optional.of(new DOI(cleanedDOI));
+            return Optional.of(new DOI(doi));
         } catch (IllegalArgumentException | NullPointerException e) {
             return Optional.empty();
         }

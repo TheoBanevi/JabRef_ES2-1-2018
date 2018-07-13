@@ -12,7 +12,12 @@ import java.util.regex.Pattern;
  *
  * Note: this is just a quick port of the original SPIRESBibtexFilterReader.
  *
- * TODO: Fix grammar in bibtex entries -- it may return invalid bibkeys (with space)
+ * @author Fedor Bezrukov
+ * @author Sheer El-Showk
+ *
+ * @version $Id$
+ *
+ * TODO: Fix grammar in bibtex entries -- it ma return invalid bibkeys (with space)
  *
  */
 public class INSPIREBibtexFilterReader extends FilterReader {

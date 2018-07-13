@@ -10,14 +10,13 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
-<?import org.jabref.gui.icon.JabRefIconView?>
-<fx:root xmlns:fx="http://javafx.com/fxml/1" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.112"
-         fx:controller="org.jabref.gui.entryeditor.EntryEditor">
+<?import de.jensd.fx.glyphs.materialdesignicons.MaterialDesignIconView?>
+<fx:root xmlns:fx="http://javafx.com/fxml/1" type="BorderPane" xmlns="http://javafx.com/javafx/8.0.112">
     <left>
         <ToolBar orientation="VERTICAL">
             <Button styleClass="flatButton,narrow" onAction="#close">
                 <graphic>
-                    <JabRefIconView glyph="CLOSE"/>
+                    <MaterialDesignIconView glyphName="CLOSE"/>
                 </graphic>
                 <tooltip>
                     <Tooltip text="%Close window"/>
@@ -34,7 +33,7 @@
             <Pane prefHeight="10" VBox.vgrow="ALWAYS"/>
             <Button fx:id="typeChangeButton" styleClass="flatButton,narrow">
                 <graphic>
-                    <JabRefIconView glyph="ENTRY_TYPE"/>
+                    <MaterialDesignIconView glyphName="PENCIL"/>
                 </graphic>
                 <tooltip>
                     <Tooltip text="%Change entry type"/>
@@ -42,7 +41,7 @@
             </Button>
             <Button styleClass="flatButton,narrow" onAction="#generateKey">
                 <graphic>
-                    <JabRefIconView glyphName="MAKE_KEY"/>
+                    <MaterialDesignIconView glyphName="KEY_VARIANT"/>
                 </graphic>
                 <tooltip>
                     <Tooltip text="%Generate BibTeX key"/>
@@ -50,7 +49,7 @@
             </Button>
             <Button fx:id="fetcherButton" styleClass="flatButton,narrow">
                 <graphic>
-                    <JabRefIconView glyph="REFRESH"/>
+                    <MaterialDesignIconView glyphName="REFRESH"/>
                 </graphic>
                 <tooltip>
                     <Tooltip text="%Update with bibliographic information from the web"/>
@@ -58,7 +57,7 @@
             </Button>
             <Button styleClass="flatButton,narrow" onAction="#deleteEntry">
                 <graphic>
-                    <JabRefIconView glyph="DELETE_ENTRY"/>
+                    <MaterialDesignIconView glyphName="DELETE"/>
                 </graphic>
                 <tooltip>
                     <Tooltip text="%Delete entry"/>
@@ -67,7 +66,7 @@
             <Separator/>
             <Button styleClass="flatButtonNoSpaceBottom,narrow" onAction="#navigateToPreviousEntry">
                 <graphic>
-                    <JabRefIconView glyph="PREVIOUS_UP"/>
+                    <MaterialDesignIconView glyphName="CHEVRON_UP"/>
                 </graphic>
                 <tooltip>
                     <Tooltip text="%Previous entry"/>
@@ -75,7 +74,7 @@
             </Button>
             <Button styleClass="flatButtonNoSpaceTop,narrow" onAction="#navigateToNextEntry">
                 <graphic>
-                    <JabRefIconView glyph="NEXT_DOWN"/>
+                    <MaterialDesignIconView glyphName="CHEVRON_DOWN"/>
                 </graphic>
                 <tooltip>
                     <Tooltip text="%Next entry"/>

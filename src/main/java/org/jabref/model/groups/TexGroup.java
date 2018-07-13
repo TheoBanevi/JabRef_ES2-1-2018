@@ -11,12 +11,12 @@ import org.jabref.model.entry.BibEntry;
 import org.jabref.model.util.FileUpdateListener;
 import org.jabref.model.util.FileUpdateMonitor;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class TexGroup extends AbstractGroup implements FileUpdateListener {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TexGroup.class);
+    private static final Log LOGGER = LogFactory.getLog(TexGroup.class);
 
     private Path filePath;
     private Set<String> keysUsedInAux = null;
@@ -52,7 +52,7 @@ public class TexGroup extends AbstractGroup implements FileUpdateListener {
             return new TexGroup(name, context, filePath, auxParser, fileMonitor);
         } catch (IOException ex) {
             // This should never happen because we were able to monitor the file just fine until now
-            LOGGER.error("Problem creating copy of group", ex);
+            LOGGER.error(ex);
             return null;
         }
     }

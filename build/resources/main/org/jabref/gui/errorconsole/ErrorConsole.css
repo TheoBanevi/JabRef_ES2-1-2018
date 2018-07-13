@@ -1,26 +1,40 @@
 .list-content {
-	-fx-padding: 10px;
+	-fx-padding: 10.0px;
+}
+
+.list-cell:default {
+	-fx-background-color: white;
 }
 
 .info-section {
-	-fx-padding: 10px;
-    -fx-background-color: -fx-background;
+	-fx-padding: 10.0px;
 }
 
-.info-section .glyph-icon {
-	-fx-font-size: 24.0;
+.info-section .icon {
+	-fx-font-size: 48.0;
 }
 
-.exception .glyph-icon {
-    -fx-font-size: 18.0;
-    -fx-fill: -jr-error;
+.exception{
+    -fx-text-fill: -fx-negative;
 }
 
-.log .glyph-icon {
-    -fx-font-size: 18.0;
-    -fx-fill: -jr-info;
+.exception .icon {
+	-fx-fill: -fx-negative;
+}
+
+.log {
+    -fx-text-fill: -fx-info;
+}
+
+.log .icon {
+	-fx-fill: -fx-info;
 }
 
 .custom-buttons {
-	-fx-padding: 5px;
+	-fx-padding: 5.0px;
+}
+
+.dialog-pane *.button-bar {
+	-fx-max-height: 0.0;
+	-fx-pref-height: 0.0;
 }

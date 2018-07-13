@@ -18,6 +18,7 @@ class PreambleChangeViewModel extends ChangeViewModel {
     private final InfoPane tp = new InfoPane();
     private final JScrollPane sp = new JScrollPane(tp);
 
+
     public PreambleChangeViewModel(String mem, PreambleDiff diff) {
         super(Localization.lang("Changed preamble"));
         this.disk = diff.getNewPreamble();
@@ -42,7 +43,7 @@ class PreambleChangeViewModel extends ChangeViewModel {
     @Override
     public boolean makeChange(BasePanel panel, BibDatabase secondary, NamedCompound undoEdit) {
         panel.getDatabase().setPreamble(disk);
-        undoEdit.addEdit(new UndoablePreambleChange(panel.getDatabase(), mem, disk));
+        undoEdit.addEdit(new UndoablePreambleChange(panel.getDatabase(), panel, mem, disk));
         secondary.setPreamble(disk);
         return true;
     }

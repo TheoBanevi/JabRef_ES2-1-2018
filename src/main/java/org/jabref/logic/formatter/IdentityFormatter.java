@@ -8,7 +8,7 @@ import org.jabref.model.cleanup.Formatter;
 /**
  * It may seem useless, but is needed as a fallback option
  */
-public class IdentityFormatter extends Formatter {
+public class IdentityFormatter implements Formatter {
 
     @Override
     public String getName() {
@@ -35,4 +35,15 @@ public class IdentityFormatter extends Formatter {
     public String getExampleInput() {
         return "JabRef";
     }
+
+    @Override
+    public int hashCode() {
+        return defaultHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return defaultEquals(obj);
+    }
+
 }

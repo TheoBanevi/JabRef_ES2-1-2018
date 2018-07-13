@@ -7,7 +7,7 @@ import org.jabref.logic.l10n.Localization;
 import org.jabref.model.cleanup.Formatter;
 import org.jabref.model.entry.Month;
 
-public class NormalizeMonthFormatter extends Formatter {
+public class NormalizeMonthFormatter implements Formatter {
 
     @Override
     public String getName() {
@@ -35,4 +35,5 @@ public class NormalizeMonthFormatter extends Formatter {
     public String getExampleInput() {
         return "December";
     }
+
 }

@@ -6,11 +6,10 @@ import javafx.scene.Parent;
 import javafx.scene.layout.HBox;
 
 import org.jabref.gui.autocompleter.AutoCompleteSuggestionProvider;
+import org.jabref.gui.util.ControlHelper;
 import org.jabref.logic.integrity.FieldCheckers;
 import org.jabref.model.entry.BibEntry;
 import org.jabref.preferences.JabRefPreferences;
-
-import com.airhacks.afterburner.views.ViewLoader;
 
 public class OwnerEditor extends HBox implements FieldEditorFX {
 
@@ -20,9 +19,7 @@ public class OwnerEditor extends HBox implements FieldEditorFX {
     public OwnerEditor(String fieldName, JabRefPreferences preferences, AutoCompleteSuggestionProvider<?> suggestionProvider, FieldCheckers fieldCheckers) {
         this.viewModel = new OwnerEditorViewModel(fieldName, suggestionProvider, preferences, fieldCheckers);
 
-        ViewLoader.view(this)
-                  .root(this)
-                  .load();
+        ControlHelper.loadFXMLForControl(this);
 
         textArea.textProperty().bindBidirectional(viewModel.textProperty());
 

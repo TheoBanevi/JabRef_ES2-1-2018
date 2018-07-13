@@ -32,6 +32,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import org.jabref.Globals;
+import org.jabref.gui.DialogService;
+import org.jabref.gui.FXDialogService;
 import org.jabref.gui.JabRefFrame;
 import org.jabref.gui.desktop.JabRefDesktop;
 import org.jabref.gui.externalfiletype.ExternalFileType;
@@ -61,9 +63,7 @@ import org.slf4j.LoggerFactory;
  *
  * For use when downloading files, this class also offers a progress bar and a "Downloading..."
  * label that can be hidden when the download is complete.
- * @deprecated Use {@link LinkedFileEditDialogView}
  */
-@Deprecated
 public class FileListEntryEditor {
 
     private static final Pattern REMOTE_LINK_PATTERN = Pattern.compile("[a-z]+://.*");
@@ -75,7 +75,7 @@ public class FileListEntryEditor {
     private final JComboBox<ExternalFileType> types;
     private final JProgressBar prog = new JProgressBar(SwingConstants.HORIZONTAL);
     private final JLabel downloadLabel = new JLabel(Localization.lang("Downloading..."));
-    private JDialog dialog;
+    private JDialog diag;
     //Do not make this variable final, as then the lambda action listener will fail on compile
     private JabRefFrame frame;
     private boolean showSaveDialog;
@@ -94,12 +94,13 @@ public class FileListEntryEditor {
         FileDialogConfiguration fileDialogConfiguration = new FileDialogConfiguration.Builder()
                 .withInitialDirectory(workingDir)
                 .withInitialFileName(fileName).build();
+        DialogService ds = new FXDialogService();
 
         Optional<Path> path;
         if (showSaveDialog) {
-            path = DefaultTaskExecutor.runInJavaFXThread(() -> frame.getDialogService().showFileSaveDialog(fileDialogConfiguration));
+            path = DefaultTaskExecutor.runInJavaFXThread(() -> ds.showFileSaveDialog(fileDialogConfiguration));
         } else {
-            path = DefaultTaskExecutor.runInJavaFXThread(() -> frame.getDialogService().showFileOpenDialog(fileDialogConfiguration));
+            path = DefaultTaskExecutor.runInJavaFXThread(() -> ds.showFileOpenDialog(fileDialogConfiguration));
         }
 
         path.ifPresent(newFile -> {
@@ -144,7 +145,7 @@ public class FileListEntryEditor {
                     return;
                 }
             }
-            dialog.dispose();
+            diag.dispose();
             storeSettings(FileListEntryEditor.this.entry);
             okPressed = true;
         };
@@ -200,7 +201,7 @@ public class FileListEntryEditor {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                dialog.dispose();
+                diag.dispose();
             }
         };
         cancel.addActionListener(cancelAction);
@@ -208,7 +209,7 @@ public class FileListEntryEditor {
         // Key bindings:
         ActionMap am = builder.getPanel().getActionMap();
         InputMap im = builder.getPanel().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        im.put(Globals.getKeyPrefs().getKey(KeyBinding.CLOSE), "close");
+        im.put(Globals.getKeyPrefs().getKey(KeyBinding.CLOSE_DIALOG), "close");
         am.put("close", cancelAction);
 
         link.getDocument().addDocumentListener(new DocumentListener() {
@@ -230,13 +231,13 @@ public class FileListEntryEditor {
 
         });
 
-        dialog = new JDialog();
-        dialog.setTitle(Localization.lang("Select files"));
-        dialog.setModal(true);
-        dialog.getContentPane().add(builder.getPanel(), BorderLayout.CENTER);
-        dialog.getContentPane().add(bb.getPanel(), BorderLayout.SOUTH);
-        dialog.pack();
-        dialog.addWindowListener(new WindowAdapter() {
+        diag = new JDialog();
+        diag.setTitle(Localization.lang("Select files"));
+        diag.setModal(true);
+        diag.getContentPane().add(builder.getPanel(), BorderLayout.CENTER);
+        diag.getContentPane().add(bb.getPanel(), BorderLayout.SOUTH);
+        diag.pack();
+        diag.addWindowListener(new WindowAdapter() {
 
             @Override
             public void windowActivated(WindowEvent event) {
@@ -316,12 +317,12 @@ public class FileListEntryEditor {
         } else {
             title = Localization.lang("Select files");
         }
-        dialog.setTitle(title);
-        dialog.setVisible(visible);
+        diag.setTitle(title);
+        diag.setVisible(visible);
     }
 
     public boolean isVisible() {
-        return (dialog != null) && dialog.isVisible();
+        return (diag != null) && diag.isVisible();
     }
 
     private void setValues(LinkedFile entry) {

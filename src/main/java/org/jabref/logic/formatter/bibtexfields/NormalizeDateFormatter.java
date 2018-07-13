@@ -9,7 +9,7 @@ import org.jabref.model.entry.Date;
 /**
  * This class transforms date to the format yyyy-mm-dd or yyyy-mm..
  */
-public class NormalizeDateFormatter extends Formatter {
+public class NormalizeDateFormatter implements Formatter {
     @Override
     public String getName() {
         return Localization.lang("Normalize date");
@@ -42,5 +42,15 @@ public class NormalizeDateFormatter extends Formatter {
     @Override
     public String getExampleInput() {
         return "29.11.2003";
+    }
+
+    @Override
+    public int hashCode() {
+        return defaultHashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return defaultEquals(obj);
     }
 }

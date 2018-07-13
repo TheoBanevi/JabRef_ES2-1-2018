@@ -4,6 +4,10 @@ import java.util.Locale;
 
 import org.jabref.logic.layout.LayoutFormatter;
 
+/**
+ *
+ * @author Usuario
+ */
 public class Iso690NamesAuthors implements LayoutFormatter {
 
     @Override

@@ -13,6 +13,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTable;
 import javax.swing.JTextField;
 
 import org.jabref.Globals;
@@ -32,6 +33,7 @@ class TablePrefsTab extends JPanel implements PrefsTab {
     private final JCheckBox priDesc;
     private final JCheckBox secDesc;
     private final JCheckBox terDesc;
+    private final JCheckBox floatMarked;
 
     private final JRadioButton namesAsIs;
     private final JRadioButton namesFf;
@@ -84,6 +86,8 @@ class TablePrefsTab extends JPanel implements PrefsTab {
         noAbbrNames = new JRadioButton(Localization.lang("Do not abbreviate names"));
         abbrNames = new JRadioButton(Localization.lang("Abbreviate names"));
         lastNamesOnly = new JRadioButton(Localization.lang("Show last names only"));
+
+        floatMarked = new JCheckBox(Localization.lang("Float marked entries"));
 
         priField = new JTextField(10);
         secField = new JTextField(10);
@@ -178,6 +182,9 @@ class TablePrefsTab extends JPanel implements PrefsTab {
         builder.append(builder2.getPanel());
         builder.nextLine();
         builder.append(pan);
+        builder.append(floatMarked);
+        builder.nextLine();
+        builder.append(pan);
         builder2 = new DefaultFormBuilder(new FormLayout("left:pref, 8dlu, fill:pref", ""));
         builder2.append(Localization.lang("Sort the following fields as numeric fields") + ':');
         builder2.append(numericFields);
@@ -201,7 +208,8 @@ class TablePrefsTab extends JPanel implements PrefsTab {
 
     @Override
     public void setValues() {
-        autoResizeMode.setSelected(prefs.getBoolean(JabRefPreferences.AUTO_RESIZE_MODE));
+        autoResizeMode
+        .setSelected(prefs.getInt(JabRefPreferences.AUTO_RESIZE_MODE) == JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         priField.setText(prefs.get(JabRefPreferences.TABLE_PRIMARY_SORT_FIELD));
         secField.setText(prefs.get(JabRefPreferences.TABLE_SECONDARY_SORT_FIELD));
@@ -230,6 +238,8 @@ class TablePrefsTab extends JPanel implements PrefsTab {
         secDesc.setSelected(prefs.getBoolean(JabRefPreferences.TABLE_SECONDARY_SORT_DESCENDING));
         terDesc.setSelected(prefs.getBoolean(JabRefPreferences.TABLE_TERTIARY_SORT_DESCENDING));
 
+        floatMarked.setSelected(prefs.getBoolean(JabRefPreferences.FLOAT_MARKED_ENTRIES));
+
         abbrNames.setEnabled(!namesNatbib.isSelected());
         lastNamesOnly.setEnabled(!namesNatbib.isSelected());
         noAbbrNames.setEnabled(!namesNatbib.isSelected());
@@ -257,13 +267,17 @@ class TablePrefsTab extends JPanel implements PrefsTab {
         prefs.putBoolean(JabRefPreferences.NAMES_LAST_ONLY, lastNamesOnly.isSelected());
         prefs.putBoolean(JabRefPreferences.ABBR_AUTHOR_NAMES, abbrNames.isSelected());
 
-        prefs.putBoolean(JabRefPreferences.AUTO_RESIZE_MODE, autoResizeMode.isSelected());
+        prefs.putInt(JabRefPreferences.AUTO_RESIZE_MODE,
+                autoResizeMode.isSelected() ? JTable.AUTO_RESIZE_ALL_COLUMNS : JTable.AUTO_RESIZE_OFF);
         prefs.putBoolean(JabRefPreferences.TABLE_PRIMARY_SORT_DESCENDING, priDesc.isSelected());
         prefs.putBoolean(JabRefPreferences.TABLE_SECONDARY_SORT_DESCENDING, secDesc.isSelected());
         prefs.putBoolean(JabRefPreferences.TABLE_TERTIARY_SORT_DESCENDING, terDesc.isSelected());
         prefs.put(JabRefPreferences.TABLE_PRIMARY_SORT_FIELD, priField.getText().toLowerCase(Locale.ROOT).trim());
         prefs.put(JabRefPreferences.TABLE_SECONDARY_SORT_FIELD, secField.getText().toLowerCase(Locale.ROOT).trim());
         prefs.put(JabRefPreferences.TABLE_TERTIARY_SORT_FIELD, terField.getText().toLowerCase(Locale.ROOT).trim());
+
+        prefs.putBoolean(JabRefPreferences.FLOAT_MARKED_ENTRIES, floatMarked.isSelected());
+        // updatefont
 
         String oldVal = prefs.get(JabRefPreferences.NUMERIC_FIELDS);
         String newVal = numericFields.getText().trim();

@@ -1,60 +1,52 @@
 package org.jabref.gui.openoffice;
 
-import javax.swing.SwingUtilities;
+import javax.swing.Icon;
 
-import javafx.embed.swing.SwingNode;
-import javafx.scene.Node;
-import javafx.scene.layout.Priority;
-
-import org.jabref.gui.JabRefFrame;
+import org.jabref.Globals;
 import org.jabref.gui.SidePaneComponent;
 import org.jabref.gui.SidePaneManager;
-import org.jabref.gui.SidePaneType;
-import org.jabref.gui.actions.Action;
-import org.jabref.gui.actions.StandardActions;
-import org.jabref.gui.icon.IconTheme;
+import org.jabref.gui.keyboard.KeyBinding;
+import org.jabref.logic.l10n.Localization;
 import org.jabref.logic.openoffice.OpenOfficePreferences;
 
 public class OpenOfficeSidePanel extends SidePaneComponent {
 
     private OpenOfficePreferences preferences;
-    private JabRefFrame frame;
+    private final ToggleAction toggleAction;
 
-    public OpenOfficeSidePanel(SidePaneManager sidePaneManager, OpenOfficePreferences preferences, JabRefFrame frame) {
-        super(sidePaneManager, IconTheme.JabRefIcons.FILE_OPENOFFICE, "OpenOffice/LibreOffice");
+
+    public OpenOfficeSidePanel(SidePaneManager sidePaneManager, Icon icon, String title, OpenOfficePreferences preferences) {
+        super(sidePaneManager, icon, title);
         this.preferences = preferences;
-        this.frame = frame;
+        sidePaneManager.register(this);
+        if (preferences.getShowPanel()) {
+            manager.show(OpenOfficeSidePanel.class);
+        }
+
+        toggleAction = new ToggleAction(Localization.lang("OpenOffice/LibreOffice connection"),
+                Localization.lang("OpenOffice/LibreOffice connection"),
+                Globals.getKeyPrefs().getKey(KeyBinding.OPEN_OPEN_OFFICE_LIBRE_OFFICE_CONNECTION),
+                icon);
     }
 
     @Override
-    public void beforeClosing() {
+    public void componentClosing() {
         preferences.setShowPanel(false);
     }
 
     @Override
-    public void afterOpening() {
+    public void componentOpening() {
         preferences.setShowPanel(true);
     }
 
     @Override
-    public Priority getResizePolicy() {
-        return Priority.NEVER;
+    public int getRescalingWeight() {
+        return 0;
     }
 
     @Override
-    public Action getToggleAction() {
-        return StandardActions.TOOGLE_OO;
+    public ToggleAction getToggleAction() {
+        return toggleAction;
     }
 
-    @Override
-    protected Node createContentPane() {
-        SwingNode swingNode = new SwingNode();
-        SwingUtilities.invokeLater(() -> swingNode.setContent(new OpenOfficePanel(frame).getContent()));
-        return swingNode;
-    }
-
-    @Override
-    public SidePaneType getType() {
-        return SidePaneType.OPEN_OFFICE;
-    }
 }

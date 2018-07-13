@@ -5,12 +5,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JOptionPane;
 import javax.swing.undo.CompoundEdit;
 
 import org.jabref.Globals;
 import org.jabref.JabRefExecutorService;
 import org.jabref.gui.BasePanel;
 import org.jabref.gui.DialogService;
+import org.jabref.gui.FXDialogService;
 import org.jabref.gui.JabRefFrame;
 import org.jabref.gui.MergeDialog;
 import org.jabref.gui.actions.BaseAction;
@@ -22,7 +24,7 @@ import org.jabref.gui.util.FileDialogConfiguration;
 import org.jabref.logic.importer.OpenDatabase;
 import org.jabref.logic.importer.ParserResult;
 import org.jabref.logic.l10n.Localization;
-import org.jabref.logic.util.StandardFileType;
+import org.jabref.logic.util.FileType;
 import org.jabref.logic.util.UpdateField;
 import org.jabref.model.database.BibDatabase;
 import org.jabref.model.database.BibDatabaseContext;
@@ -48,12 +50,10 @@ public class AppendDatabaseAction implements BaseAction {
     private final BasePanel panel;
 
     private final List<Path> filesToOpen = new ArrayList<>();
-    private final DialogService dialogService;
 
     public AppendDatabaseAction(JabRefFrame frame, BasePanel panel) {
         this.frame = frame;
         this.panel = panel;
-        dialogService = frame.getDialogService();
     }
 
     private static void mergeFromBibtex(BasePanel panel, ParserResult parserResult, boolean importEntries,
@@ -78,7 +78,7 @@ public class AppendDatabaseAction implements BaseAction {
                 database.insertEntry(entry);
                 appendedEntries.add(entry);
                 originalEntries.add(originalEntry);
-                ce.addEdit(new UndoableInsertEntry(database, entry));
+                ce.addEdit(new UndoableInsertEntry(database, entry, panel));
             }
         }
 
@@ -147,13 +147,15 @@ public class AppendDatabaseAction implements BaseAction {
     public void action() {
         filesToOpen.clear();
         final MergeDialog dialog = new MergeDialog(frame, Localization.lang("Append library"), true);
+        dialog.setLocationRelativeTo(panel);
         dialog.setVisible(true);
         if (dialog.isOkPressed()) {
 
             FileDialogConfiguration fileDialogConfiguration = new FileDialogConfiguration.Builder()
-                    .withDefaultExtension(StandardFileType.BIBTEX_DB)
+                    .withDefaultExtension(FileType.BIBTEX_DB)
                     .withInitialDirectory(Globals.prefs.get(JabRefPreferences.WORKING_DIRECTORY))
                     .build();
+            DialogService dialogService = new FXDialogService();
 
             List<Path> chosen = DefaultTaskExecutor
                     .runInJavaFXThread(() -> dialogService.showFileOpenDialogAndGetMultipleFiles(fileDialogConfiguration));
@@ -185,8 +187,8 @@ public class AppendDatabaseAction implements BaseAction {
                 panel.output(Localization.lang("Imported from library") + " '" + file + "'");
             } catch (IOException | KeyCollisionException ex) {
                 LOGGER.warn("Could not open database", ex);
-
-                dialogService.showErrorDialogAndWait(Localization.lang("Open library"), ex);
+                JOptionPane.showMessageDialog(panel, ex.getMessage(), Localization.lang("Open library"),
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }

@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import javax.swing.Icon;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+
 import org.jabref.Globals;
 import org.jabref.JabRefExecutorService;
 import org.jabref.gui.BasePanel;
-import org.jabref.gui.DialogService;
-import org.jabref.gui.icon.IconTheme;
-import org.jabref.gui.icon.JabRefIcon;
+import org.jabref.gui.IconTheme;
 import org.jabref.logic.l10n.Localization;
 import org.jabref.model.database.BibDatabase;
 import org.jabref.model.entry.BibEntry;
@@ -23,9 +26,7 @@ public class PushToVim extends AbstractPushToApplication implements PushToApplic
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PushToVim.class);
 
-    public PushToVim(DialogService dialogService) {
-        super(dialogService);
-    }
+    private final JTextField vimServer = new JTextField(30);
 
     @Override
     public String getApplicationName() {
@@ -33,8 +34,29 @@ public class PushToVim extends AbstractPushToApplication implements PushToApplic
     }
 
     @Override
-    public JabRefIcon getIcon() {
-        return IconTheme.JabRefIcons.APPLICATION_VIM;
+    public Icon getIcon() {
+        return IconTheme.getImage("vim");
+    }
+
+    @Override
+    public JPanel getSettingsPanel() {
+        vimServer.setText(Globals.prefs.get(JabRefPreferences.VIM_SERVER));
+        return super.getSettingsPanel();
+    }
+
+    @Override
+    public void storeSettings() {
+        super.storeSettings();
+        Globals.prefs.put(JabRefPreferences.VIM_SERVER, vimServer.getText());
+    }
+
+    @Override
+    protected void initSettingsPanel() {
+        super.initSettingsPanel();
+        builder.appendRows("2dlu, p");
+        builder.add(Localization.lang("Vim server name") + ":").xy(1, 3);
+        builder.add(vimServer).xy(3, 3);
+        settings = builder.build();
     }
 
     @Override
@@ -54,9 +76,9 @@ public class PushToVim extends AbstractPushToApplication implements PushToApplic
 
         try {
             String[] com = new String[] {commandPath, "--servername",
-                                         Globals.prefs.get(JabRefPreferences.VIM_SERVER), "--remote-send",
-                                         "<C-\\><C-N>a" + getCiteCommand() +
-                                                                                                           "{" + keys + "}"};
+                    Globals.prefs.get(JabRefPreferences.VIM_SERVER), "--remote-send",
+                    "<C-\\><C-N>a" + getCiteCommand() +
+                    "{" + keys + "}"};
 
             final Process p = Runtime.getRuntime().exec(com);
 
@@ -90,14 +112,18 @@ public class PushToVim extends AbstractPushToApplication implements PushToApplic
     @Override
     public void operationCompleted(BasePanel panel) {
         if (couldNotConnect) {
-
-            dialogService.showErrorDialogAndWait(Localization.lang("Error pushing entries"),
-                                                 Localization.lang("Could not connect to Vim server. Make sure that Vim is running with correct server name."));
-
+            JOptionPane.showMessageDialog(
+                    panel.frame(),
+                    "<HTML>" +
+                            Localization.lang("Could not connect to Vim server. Make sure that "
+                                    + "Vim is running<BR>with correct server name.")
+                    + "</HTML>",
+                    Localization.lang("Error"), JOptionPane.ERROR_MESSAGE);
         } else if (couldNotCall) {
-            dialogService.showErrorDialogAndWait(Localization.lang("Error pushing entries"),
-                                                 Localization.lang("Could not run the 'vim' program."));
-
+            JOptionPane.showMessageDialog(
+                    panel.frame(),
+                    Localization.lang("Could not run the 'vim' program."),
+                    Localization.lang("Error"), JOptionPane.ERROR_MESSAGE);
         } else {
             super.operationCompleted(panel);
         }

@@ -82,6 +82,6 @@ public class ParserResultWarningDialog {
         };
 
         // Show dialog
-        JOptionPane.showMessageDialog(null, scrollPane, dialogTitle, JOptionPane.WARNING_MESSAGE);
+        JOptionPane.showMessageDialog(jabRefFrame, scrollPane, dialogTitle, JOptionPane.WARNING_MESSAGE);
     }
 }

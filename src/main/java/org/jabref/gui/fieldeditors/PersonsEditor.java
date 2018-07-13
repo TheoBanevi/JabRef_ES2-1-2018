@@ -16,12 +16,10 @@ public class PersonsEditor extends HBox implements FieldEditorFX {
 
     @FXML private final PersonsEditorViewModel viewModel;
 
-    private EditorTextArea textArea;
-
     public PersonsEditor(String fieldName, AutoCompleteSuggestionProvider<?> suggestionProvider, JabRefPreferences preferences, FieldCheckers fieldCheckers) {
         this.viewModel = new PersonsEditorViewModel(fieldName, suggestionProvider, preferences.getAutoCompletePreferences(), fieldCheckers);
 
-        textArea = new EditorTextArea();
+        EditorTextArea textArea = new EditorTextArea();
         HBox.setHgrow(textArea, Priority.ALWAYS);
         textArea.textProperty().bindBidirectional(viewModel.textProperty());
         textArea.addToContextMenu(EditorMenus.getNameMenu(textArea));
@@ -41,10 +39,4 @@ public class PersonsEditor extends HBox implements FieldEditorFX {
     public Parent getNode() {
         return this;
     }
-
-    @Override
-    public void requestFocus() {
-        textArea.requestFocus();
-    }
-
 }

@@ -1,5 +1,6 @@
 package org.jabref.logic.integrity;
 
+import java.util.Calendar;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -9,8 +10,7 @@ import org.jabref.model.strings.StringUtil;
 
 public class YearChecker implements ValueChecker {
 
-    private static final Predicate<String> CONTAINS_FOUR_DIGIT = Pattern.compile("([^0-9]|^)[0-9]{4}([^0-9]|$)")
-            .asPredicate();
+    private static final Predicate<String> CONTAINS_FOUR_DIGIT = Pattern.compile("([^0-9]|^)[0-9]{4}([^0-9]|$)").asPredicate();
     private static final Predicate<String> ENDS_WITH_FOUR_DIGIT = Pattern.compile("[0-9]{4}$").asPredicate();
     private static final String PUNCTUATION_MARKS = "[(){},.;!?<>%&$]";
 
@@ -23,6 +23,25 @@ public class YearChecker implements ValueChecker {
      */
     @Override
     public Optional<String> checkValue(String value) {
+
+        Calendar c = Calendar.getInstance();
+
+        int year = Integer.parseInt(value);
+
+        //Verificações do campo value e se valor do ano de argumento
+        if ((value != null) && !value.equals("")) {
+            if ((year <= c.get(Calendar.YEAR)) && (year > 0)) {
+                c.set(Calendar.YEAR, year);
+                try {
+                    c.get(Calendar.YEAR);
+
+                } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+                    return Optional.of(Localization.lang("Invalid year. Please, try again"));
+                }
+            }
+        }
+
+
         if (StringUtil.isBlank(value)) {
             return Optional.empty();
         }
@@ -38,3 +57,4 @@ public class YearChecker implements ValueChecker {
         return Optional.empty();
     }
 }
+

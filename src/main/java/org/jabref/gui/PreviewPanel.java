@@ -18,7 +18,6 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.web.WebView;
 
 import org.jabref.Globals;
-import org.jabref.gui.icon.IconTheme;
 import org.jabref.gui.keyboard.KeyBinding;
 import org.jabref.gui.keyboard.KeyBindingRepository;
 import org.jabref.gui.util.BackgroundTask;
@@ -27,7 +26,6 @@ import org.jabref.logic.citationstyle.CitationStyle;
 import org.jabref.logic.exporter.ExporterFactory;
 import org.jabref.logic.l10n.Localization;
 import org.jabref.logic.layout.Layout;
-import org.jabref.logic.layout.LayoutFormatterPreferences;
 import org.jabref.logic.layout.LayoutHelper;
 import org.jabref.logic.search.SearchQueryHighlightListener;
 import org.jabref.model.database.BibDatabaseContext;
@@ -70,48 +68,50 @@ public class PreviewPanel extends ScrollPane implements SearchQueryHighlightList
      * @param panel           (may be null) Only set this if the preview is associated to the main window.
      * @param databaseContext (may be null) Used for resolving pdf directories for links.
      */
-    public PreviewPanel(BasePanel panel, BibDatabaseContext databaseContext, KeyBindingRepository keyBindingRepository, PreviewPreferences preferences, DialogService dialogService) {
+    public PreviewPanel(BasePanel panel, BibDatabaseContext databaseContext) {
         this.databaseContext = Optional.ofNullable(databaseContext);
         this.basePanel = Optional.ofNullable(panel);
-        this.dialogService = dialogService;
-        this.clipBoardManager = Globals.clipboardManager;
-        this.keyBindingRepository = keyBindingRepository;
+        this.clipBoardManager = new ClipBoardManager();
+        this.dialogService = new FXDialogService();
+        this.keyBindingRepository = Globals.getKeyPrefs();
 
-        // Set up scroll pane for preview pane
-        setFitToHeight(true);
-        setFitToWidth(true);
-        previewView = new WebView();
-        setContent(previewView);
-        previewView.setContextMenuEnabled(false);
-        setContextMenu(createPopupMenu());
+        DefaultTaskExecutor.runInJavaFXThread(() -> {
+            // Set up scroll pane for preview pane
+            setFitToHeight(true);
+            setFitToWidth(true);
+            previewView = new WebView();
+            setContent(previewView);
+            previewView.setContextMenuEnabled(false);
+            setContextMenu(createPopupMenu());
 
-        if (this.basePanel.isPresent()) {
-            // Handler for drag content of preview to different window
-            // only created for main window (not for windows like the search results dialog)
-            setOnDragDetected(event -> {
-                        Dragboard dragboard = startDragAndDrop(TransferMode.COPY);
-                        ClipboardContent content = new ClipboardContent();
-                        content.putHtml((String) previewView.getEngine().executeScript("window.getSelection().toString()"));
-                        dragboard.setContent(content);
+            if (this.basePanel.isPresent()) {
+                // Handler for drag content of preview to different window
+                // only created for main window (not for windows like the search results dialog)
+                setOnDragDetected(event -> {
+                            Dragboard dragboard = startDragAndDrop(TransferMode.COPY);
+                            ClipboardContent content = new ClipboardContent();
+                            content.putHtml((String) previewView.getEngine().executeScript("window.getSelection().toString()"));
+                            dragboard.setContent(content);
 
-                        event.consume();
-                    }
-            );
-        }
-        createKeyBindings();
-        updateLayout(preferences);
+                            event.consume();
+                        }
+                );
+            }
+            createKeyBindings();
+            updateLayout();
+        });
     }
 
     private void createKeyBindings() {
         addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            Optional<KeyBinding> keyBinding = keyBindingRepository.mapToKeyBinding(event);
+            Optional<KeyBinding> keyBinding = Globals.getKeyPrefs().mapToKeyBinding(event);
             if (keyBinding.isPresent()) {
                 switch (keyBinding.get()) {
                     case COPY_PREVIEW:
                         copyPreviewToClipBoard();
                         event.consume();
                         break;
-                    case CLOSE:
+                    case CLOSE_DIALOG:
                         close();
                         event.consume();
                         break;
@@ -122,15 +122,15 @@ public class PreviewPanel extends ScrollPane implements SearchQueryHighlightList
     }
 
     private ContextMenu createPopupMenu() {
-        MenuItem copyPreview = new MenuItem(Localization.lang("Copy preview"), IconTheme.JabRefIcons.COPY.getGraphicNode());
+        MenuItem copyPreview = new MenuItem(Localization.lang("Copy preview"), IconTheme.JabRefIcon.COPY.getGraphicNode());
         copyPreview.setAccelerator(keyBindingRepository.getKeyCombination(KeyBinding.COPY_PREVIEW));
         copyPreview.setOnAction(event -> copyPreviewToClipBoard());
-        MenuItem printEntryPreview = new MenuItem(Localization.lang("Print entry preview"), IconTheme.JabRefIcons.PRINTED.getGraphicNode());
+        MenuItem printEntryPreview = new MenuItem(Localization.lang("Print entry preview"), IconTheme.JabRefIcon.PRINTED.getGraphicNode());
         printEntryPreview.setOnAction(event -> print());
-        MenuItem previousPreviewLayout = new MenuItem(Localization.lang("Previous preview layout"));
+        MenuItem previousPreviewLayout = new MenuItem(Localization.menuTitleFX("Previous preview layout"));
         previousPreviewLayout.setAccelerator(keyBindingRepository.getKeyCombination(KeyBinding.PREVIOUS_PREVIEW_LAYOUT));
         previousPreviewLayout.setOnAction(event -> basePanel.ifPresent(BasePanel::previousPreviewStyle));
-        MenuItem nextPreviewLayout = new MenuItem(Localization.lang("Next preview layout"));
+        MenuItem nextPreviewLayout = new MenuItem(Localization.menuTitleFX("Next preview layout"));
         nextPreviewLayout.setAccelerator(keyBindingRepository.getKeyCombination(KeyBinding.NEXT_PREVIEW_LAYOUT));
         nextPreviewLayout.setOnAction(event -> basePanel.ifPresent(BasePanel::nextPreviewStyle));
 
@@ -161,28 +161,35 @@ public class PreviewPanel extends ScrollPane implements SearchQueryHighlightList
             return;
         }
 
-        String style = previewPreferences.getCurrentPreviewStyle();
+        String style = previewPreferences.getPreviewCycle().get(previewPreferences.getPreviewCyclePosition());
+
         if (CitationStyle.isCitationStyleFile(style)) {
             if (basePanel.isPresent()) {
                 layout = Optional.empty();
                 CitationStyle.createCitationStyleFromFile(style)
-                             .ifPresent(citationStyle -> {
-                                 basePanel.get().getCitationStyleCache().setCitationStyle(citationStyle);
-                                 basePanel.get().output(Localization.lang("Preview style changed to: %0", citationStyle.getTitle()));
-                             });
+                        .ifPresent(citationStyle -> {
+                    basePanel.get().getCitationStyleCache().setCitationStyle(citationStyle);
+                    basePanel.get().output(Localization.lang("Preview style changed to: %0", citationStyle.getTitle()));
+                        });
             }
         } else {
-            updatePreviewLayout(previewPreferences.getPreviewStyle(), previewPreferences.getLayoutFormatterPreferences());
+            updatePreviewLayout(previewPreferences.getPreviewStyle());
             basePanel.ifPresent(panel -> panel.output(Localization.lang("Preview style changed to: %0", Localization.lang("Preview"))));
         }
 
         update();
     }
 
-    private void updatePreviewLayout(String layoutFile, LayoutFormatterPreferences layoutFormatterPreferences) {
+    public void updateLayout() {
+        updateLayout(Globals.prefs.getPreviewPreferences());
+    }
+
+    private void updatePreviewLayout(String layoutFile) {
         StringReader sr = new StringReader(layoutFile.replace("__NEWLINE__", "\n"));
         try {
-            layout = Optional.of(new LayoutHelper(sr, layoutFormatterPreferences).getLayoutFromText());
+            layout = Optional.of(
+                    new LayoutHelper(sr, Globals.prefs.getLayoutFormatterPreferences(Globals.journalAbbreviationLoader))
+                            .getLayoutFromText());
         } catch (IOException e) {
             layout = Optional.empty();
             LOGGER.debug("no layout could be set", e);
@@ -267,7 +274,7 @@ public class PreviewPanel extends ScrollPane implements SearchQueryHighlightList
      */
     public void setFixedLayout(String layout) {
         this.fixedLayout = true;
-        updatePreviewLayout(layout, Globals.prefs.getLayoutFormatterPreferences(Globals.journalAbbreviationLoader));
+        updatePreviewLayout(layout);
     }
 
     public void print() {
@@ -288,11 +295,11 @@ public class PreviewPanel extends ScrollPane implements SearchQueryHighlightList
     }
 
     public void close() {
-        basePanel.ifPresent(BasePanel::closeBottomPane);
+        basePanel.ifPresent(BasePanel::hideBottomComponent);
     }
 
     private void copyPreviewToClipBoard() {
         String previewContent = (String) previewView.getEngine().executeScript("document.documentElement.outerHTML");
-        clipBoardManager.setContent(previewContent);
+        clipBoardManager.setClipboardContents(previewContent);
     }
 }

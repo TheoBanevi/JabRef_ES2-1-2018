@@ -13,18 +13,18 @@ import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-import javafx.scene.control.TabPane;
-
 import org.jabref.Globals;
 import org.jabref.gui.BasePanel;
+import org.jabref.gui.DialogService;
+import org.jabref.gui.FXDialogService;
 import org.jabref.gui.JabRefDialog;
 import org.jabref.gui.JabRefFrame;
 import org.jabref.gui.keyboard.KeyBinding;
@@ -32,7 +32,7 @@ import org.jabref.gui.util.DefaultTaskExecutor;
 import org.jabref.gui.util.FileDialogConfiguration;
 import org.jabref.logic.auxparser.DefaultAuxParser;
 import org.jabref.logic.l10n.Localization;
-import org.jabref.logic.util.StandardFileType;
+import org.jabref.logic.util.FileType;
 import org.jabref.model.auxparser.AuxParser;
 import org.jabref.model.auxparser.AuxParserResult;
 import org.jabref.model.database.BibDatabase;
@@ -60,7 +60,7 @@ public class FromAuxDialog extends JabRefDialog {
     private JTextArea statusInfos;
 
     // all open databases from JabRefFrame
-    private final TabPane parentTabbedPane;
+    private final JTabbedPane parentTabbedPane;
 
     private boolean generatePressed;
 
@@ -68,8 +68,8 @@ public class FromAuxDialog extends JabRefDialog {
 
     private final JabRefFrame parentFrame;
 
-    public FromAuxDialog(JabRefFrame frame, String title, boolean modal, TabPane viewedDBs) {
-        super((JFrame) null, title, modal, FromAuxDialog.class);
+    public FromAuxDialog(JabRefFrame frame, String title, boolean modal, JTabbedPane viewedDBs) {
+        super(frame, title, modal, FromAuxDialog.class);
 
         parentTabbedPane = viewedDBs;
         parentFrame = frame;
@@ -132,7 +132,7 @@ public class FromAuxDialog extends JabRefDialog {
         // Key bindings:
         ActionMap am = statusPanel.getActionMap();
         InputMap im = statusPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        im.put(Globals.getKeyPrefs().getKey(KeyBinding.CLOSE), "close");
+        im.put(Globals.getKeyPrefs().getKey(KeyBinding.CLOSE_DIALOG), "close");
         am.put("close", new AbstractAction() {
 
             @Override
@@ -145,10 +145,10 @@ public class FromAuxDialog extends JabRefDialog {
 
     private void initPanels() {
         // collect the names of all open databases
-        int len = parentTabbedPane.getTabs().size();
+        int len = parentTabbedPane.getTabCount();
         int toSelect = -1;
         for (int i = 0; i < len; i++) {
-            dbChooser.addItem(parentTabbedPane.getTabs().get(i).getText());
+            dbChooser.addItem(parentTabbedPane.getTitleAt(i));
             if (parentFrame.getBasePanelAt(i) == parentFrame.getCurrentBasePanel()) {
                 toSelect = i;
             }
@@ -161,13 +161,14 @@ public class FromAuxDialog extends JabRefDialog {
         JButton browseAuxFileButton = new JButton(Localization.lang("Browse"));
 
         FileDialogConfiguration fileDialogConfiguration = new FileDialogConfiguration.Builder()
-                .addExtensionFilter(StandardFileType.AUX)
-                .withDefaultExtension(StandardFileType.AUX)
+                .addExtensionFilter(FileType.AUX)
+                .withDefaultExtension(FileType.AUX)
                 .withInitialDirectory(Globals.prefs.get(JabRefPreferences.WORKING_DIRECTORY)).build();
+        DialogService ds = new FXDialogService();
 
         browseAuxFileButton.addActionListener(e -> {
             Optional<Path> file = DefaultTaskExecutor
-                    .runInJavaFXThread(() -> parentFrame.getDialogService().showFileOpenDialog(fileDialogConfiguration));
+                    .runInJavaFXThread(() -> ds.showFileOpenDialog(fileDialogConfiguration));
             file.ifPresent(f -> auxFileField.setText(f.toAbsolutePath().toString()));
         });
 
@@ -201,7 +202,7 @@ public class FromAuxDialog extends JabRefDialog {
 
     private void parseActionPerformed() {
         parseButton.setEnabled(false);
-        BasePanel bp = (BasePanel) parentTabbedPane.getTabs().get(dbChooser.getSelectedIndex()).getContent();
+        BasePanel bp = (BasePanel) parentTabbedPane.getComponentAt(dbChooser.getSelectedIndex());
         notFoundList.removeAll();
         statusInfos.setText(null);
         BibDatabase refBase = bp.getDatabase();

@@ -11,7 +11,7 @@ import org.jabref.logic.exporter.SavePreferences;
 import org.jabref.logic.importer.ImportFormatPreferences;
 import org.jabref.logic.importer.Importer;
 import org.jabref.logic.importer.ParserResult;
-import org.jabref.logic.util.StandardFileType;
+import org.jabref.logic.util.FileType;
 import org.jabref.model.util.FileUpdateMonitor;
 
 /**
@@ -26,7 +26,7 @@ public class BibtexImporter extends Importer {
     private static final String SIGNATURE = "This file was created with JabRef";
 
     private final ImportFormatPreferences importFormatPreferences;
-    private final FileUpdateMonitor fileMonitor;
+    private FileUpdateMonitor fileMonitor;
 
     public BibtexImporter(ImportFormatPreferences importFormatPreferences, FileUpdateMonitor fileMonitor) {
         this.importFormatPreferences = importFormatPreferences;
@@ -78,8 +78,8 @@ public class BibtexImporter extends Importer {
     }
 
     @Override
-    public StandardFileType getFileType() {
-        return StandardFileType.BIBTEX_DB;
+    public FileType getFileType() {
+        return FileType.BIBTEX_DB;
     }
 
     @Override

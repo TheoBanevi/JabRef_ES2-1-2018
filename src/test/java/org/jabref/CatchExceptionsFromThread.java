@@ -1,4 +1,4 @@
-package java.org.jabref;
+package org.jabref;
 
 import org.junit.rules.ExternalResource;
 

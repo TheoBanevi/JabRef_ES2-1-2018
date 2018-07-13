@@ -20,7 +20,6 @@ import javafx.collections.ObservableList;
 import org.jabref.gui.DialogService;
 import org.jabref.gui.autocompleter.AutoCompleteSuggestionProvider;
 import org.jabref.gui.externalfiles.AutoSetFileLinksUtil;
-import org.jabref.gui.externalfiletype.CustomExternalFileType;
 import org.jabref.gui.externalfiletype.ExternalFileType;
 import org.jabref.gui.externalfiletype.ExternalFileTypes;
 import org.jabref.gui.externalfiletype.UnknownExternalFileType;
@@ -49,19 +48,13 @@ public class LinkedFilesEditorViewModel extends AbstractEditorViewModel {
     private final TaskExecutor taskExecutor;
     private final JabRefPreferences preferences;
 
-    public LinkedFilesEditorViewModel(String fieldName, AutoCompleteSuggestionProvider<?> suggestionProvider,
-                                      DialogService dialogService,
-                                      BibDatabaseContext databaseContext,
-                                      TaskExecutor taskExecutor,
-                                      FieldCheckers fieldCheckers,
-                                      JabRefPreferences preferences) {
+    public LinkedFilesEditorViewModel(String fieldName, AutoCompleteSuggestionProvider<?> suggestionProvider, DialogService dialogService, BibDatabaseContext databaseContext, TaskExecutor taskExecutor, FieldCheckers fieldCheckers, JabRefPreferences preferences) {
         super(fieldName, suggestionProvider, fieldCheckers);
 
         this.dialogService = dialogService;
         this.databaseContext = databaseContext;
         this.taskExecutor = taskExecutor;
         this.preferences = preferences;
-
 
         BindingsHelper.bindContentBidirectional(
                 files,
@@ -84,7 +77,7 @@ public class LinkedFilesEditorViewModel extends AbstractEditorViewModel {
      * Creates an instance of {@link LinkedFile} based on the given file.
      * We try to guess the file type and relativize the path against the given file directories.
      *
-     * TODO: Move this method to {@link LinkedFile} as soon as {@link CustomExternalFileType} lives in model.
+     * TODO: Move this method to {@link LinkedFile} as soon as {@link ExternalFileType} lives in model.
      */
     public static LinkedFile fromFile(Path file, List<Path> fileDirectories) {
         String fileExtension = FileHelper.getFileExtension(file).orElse("");
@@ -99,7 +92,7 @@ public class LinkedFilesEditorViewModel extends AbstractEditorViewModel {
         List<Path> fileDirectories = databaseContext.getFileDirectoriesAsPaths(preferences.getFileDirectoryPreferences());
 
         LinkedFile linkedFile = fromFile(file, fileDirectories);
-        return new LinkedFileViewModel(linkedFile, entry, databaseContext, taskExecutor, dialogService, preferences);
+        return new LinkedFileViewModel(linkedFile, entry, databaseContext, taskExecutor);
 
     }
 
@@ -112,9 +105,10 @@ public class LinkedFilesEditorViewModel extends AbstractEditorViewModel {
     }
 
     private List<LinkedFileViewModel> parseToFileViewModel(String stringValue) {
-        return FileFieldParser.parse(stringValue).stream()
-                              .map(linkedFile -> new LinkedFileViewModel(linkedFile, entry, databaseContext, taskExecutor, dialogService, preferences))
-                              .collect(Collectors.toList());
+        return FileFieldParser.parse(stringValue)
+                .stream()
+                .map(linkedFile -> new LinkedFileViewModel(linkedFile, entry, databaseContext, taskExecutor))
+                .collect(Collectors.toList());
     }
 
     public ObservableList<LinkedFileViewModel> getFiles() {
@@ -134,9 +128,10 @@ public class LinkedFilesEditorViewModel extends AbstractEditorViewModel {
                 .build();
 
         List<Path> fileDirectories = databaseContext.getFileDirectoriesAsPaths(preferences.getFileDirectoryPreferences());
-        dialogService.showFileOpenDialog(fileDialogConfiguration).ifPresent(newFile -> {
-                LinkedFile newLinkedFile = fromFile(newFile, fileDirectories);
-            files.add(new LinkedFileViewModel(newLinkedFile, entry, databaseContext, taskExecutor, dialogService, preferences));
+        dialogService.showFileOpenDialog(fileDialogConfiguration).ifPresent(
+                newFile -> {
+                    LinkedFile newLinkedFile = fromFile(newFile, fileDirectories);
+                    files.add(new LinkedFileViewModel(newLinkedFile, entry, databaseContext, taskExecutor));
                 });
     }
 
@@ -162,7 +157,7 @@ public class LinkedFilesEditorViewModel extends AbstractEditorViewModel {
         try {
             List<LinkedFile> linkedFiles = util.findAssociatedNotLinkedFiles(entry);
             for (LinkedFile linkedFile : linkedFiles) {
-                LinkedFileViewModel newLinkedFile = new LinkedFileViewModel(linkedFile, entry, databaseContext, taskExecutor, dialogService, preferences);
+                LinkedFileViewModel newLinkedFile = new LinkedFileViewModel(linkedFile, entry, databaseContext, taskExecutor);
                 newLinkedFile.markAsAutomaticallyFound();
                 result.add(newLinkedFile);
             }
@@ -205,7 +200,7 @@ public class LinkedFilesEditorViewModel extends AbstractEditorViewModel {
     }
 
     private void addFromURL(URL url) {
-        LinkedFileViewModel onlineFile = new LinkedFileViewModel(new LinkedFile(url, ""), entry, databaseContext, taskExecutor, dialogService, preferences);
+        LinkedFileViewModel onlineFile = new LinkedFileViewModel(new LinkedFile(url, ""), entry, databaseContext, taskExecutor);
         files.add(onlineFile);
         onlineFile.download();
     }

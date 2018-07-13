@@ -1,9 +1,10 @@
 package org.jabref.gui.journals;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -12,6 +13,7 @@ import java.util.stream.Stream;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
+import org.jabref.CatchExceptionsFromThread;
 import org.jabref.JabRefException;
 import org.jabref.gui.DialogService;
 import org.jabref.gui.util.CurrentThreadTaskExecutor;
@@ -21,25 +23,27 @@ import org.jabref.logic.journals.JournalAbbreviationLoader;
 import org.jabref.logic.journals.JournalAbbreviationPreferences;
 import org.jabref.preferences.PreferencesService;
 
-import org.junit$pioneer.jupiter.TempDirectory;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.assertj.core.util.Files;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import static org.jabref.logic.util.OS.NEWLINE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(TempDirectory.class)
-class ManageJournalAbbreviationsViewModelTest {
+public class ManageJournalAbbreviationsViewModelTest {
 
+    @ClassRule
+    public static CatchExceptionsFromThread catchExceptions = new CatchExceptionsFromThread();
+    @Rule
+    public TemporaryFolder tempFolder = new TemporaryFolder();
     private ManageJournalAbbreviationsViewModel viewModel;
     private Path emptyTestFile;
     private Path testFile1Entries;
@@ -49,8 +53,8 @@ class ManageJournalAbbreviationsViewModelTest {
     private JournalAbbreviationPreferences abbreviationPreferences;
     private DialogService dialogService;
 
-    @BeforeEach
-    void setUpViewModel(@TempDirectory.TempDir Path tempFolder) throws Exception {
+    @Before
+    public void setUpViewModel() throws Exception {
         abbreviationPreferences = mock(JournalAbbreviationPreferences.class);
         PreferencesService preferences = mock(PreferencesService.class);
         when(preferences.getJournalAbbreviationPreferences()).thenReturn(abbreviationPreferences);
@@ -59,52 +63,52 @@ class ManageJournalAbbreviationsViewModelTest {
         TaskExecutor taskExecutor = new CurrentThreadTaskExecutor();
         JournalAbbreviationLoader journalAbbreviationLoader = mock(JournalAbbreviationLoader.class);
         viewModel = new ManageJournalAbbreviationsViewModel(preferences, dialogService, taskExecutor, journalAbbreviationLoader);
-        emptyTestFile = createTestFile(tempFolder, "emptyTestFile.txt", "");
-        testFile1Entries = createTestFile(tempFolder, "testFile1Entries.txt", "Test Entry = TE" + NEWLINE + "");
-        testFile3Entries = createTestFile(tempFolder, "testFile3Entries.txt",
+        emptyTestFile = createTemporaryTestFile("emptyTestFile.txt", "");
+        testFile1Entries = createTemporaryTestFile("testFile1Entries.txt", "Test Entry = TE" + NEWLINE + "");
+        testFile3Entries = createTemporaryTestFile("testFile3Entries.txt",
                 "Abbreviations = Abb" + NEWLINE + "Test Entry = TE" + NEWLINE + "MoreEntries = ME" + NEWLINE + "");
-        testFile4Entries = createTestFile(tempFolder, "testFile4Entries.txt", "Abbreviations = Abb" + NEWLINE
+        testFile4Entries = createTemporaryTestFile("testFile4Entries.txt", "Abbreviations = Abb" + NEWLINE
                 + "Test Entry = TE" + NEWLINE + "MoreEntries = ME" + NEWLINE + "Entry = E" + NEWLINE + "");
-        testFile5EntriesWithDuplicate = createTestFile(tempFolder, "testFile5Entries.txt",
+        testFile5EntriesWithDuplicate = createTemporaryTestFile("testFile5Entries.txt",
                 "Abbreviations = Abb" + NEWLINE + "Test Entry = TE" + NEWLINE + "Test Entry = TE" + NEWLINE
                         + "MoreEntries = ME" + NEWLINE + "EntryEntry = EE" + NEWLINE + "");
     }
 
     @Test
-    void testInitialHasNoFilesAndNoAbbreviations() {
-        assertEquals(0, viewModel.journalFilesProperty().size());
-        assertEquals(0, viewModel.abbreviationsProperty().size());
+    public void testInitialHasNoFilesAndNoAbbreviations() {
+        Assert.assertEquals(0, viewModel.journalFilesProperty().size());
+        Assert.assertEquals(0, viewModel.abbreviationsProperty().size());
     }
 
     @Test
-    void testInitialWithSavedFilesIncrementsFilesCounter() throws Exception {
+    public void testInitialWithSavedFilesIncrementsFilesCounter() throws Exception {
         addFourTestFileToViewModelAndPreferences();
         viewModel.createFileObjects();
 
-        assertEquals(4, viewModel.journalFilesProperty().size());
+        Assert.assertEquals(4, viewModel.journalFilesProperty().size());
     }
 
     @Test
-    void testRemoveDuplicatesWhenReadingFiles() throws Exception {
+    public void testRemoveDuplicatesWhenReadingFiles() throws Exception {
         addFourTestFileToViewModelAndPreferences();
         viewModel.createFileObjects();
         viewModel.selectLastJournalFile();
 
         // should result in 4 real abbreviations and one pseudo abbreviation
-        assertEquals(5, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(5, viewModel.abbreviationsProperty().size());
     }
 
     @Test
-    void addFileIncreasesCounterOfOpenFilesAndHasNoAbbreviations() throws Exception {
+    public void addFileIncreasesCounterOfOpenFilesAndHasNoAbbreviations() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(emptyTestFile));
         viewModel.addNewFile();
 
-        assertEquals(1, viewModel.journalFilesProperty().size());
-        assertEquals(1, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(1, viewModel.journalFilesProperty().size());
+        Assert.assertEquals(1, viewModel.abbreviationsProperty().size());
     }
 
     @Test
-    void addDuplicatedFileResultsInErrorDialog() throws Exception {
+    public void addDuplicatedFileResultsInErrorDialog() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile1Entries));
         viewModel.addNewFile();
         viewModel.addNewFile();
@@ -112,7 +116,7 @@ class ManageJournalAbbreviationsViewModelTest {
     }
 
     @Test
-    void testOpenDuplicatedFileResultsInAnException() throws Exception {
+    public void testOpenDuplicatedFileResultsInAnException() throws Exception {
         when(dialogService.showFileOpenDialog(any())).thenReturn(Optional.of(testFile1Entries));
         viewModel.openFile();
         viewModel.openFile();
@@ -120,45 +124,45 @@ class ManageJournalAbbreviationsViewModelTest {
     }
 
     @Test
-    void testSelectLastJournalFileSwitchesFilesAndTheirAbbreviations() throws Exception {
+    public void testSelectLastJournalFileSwitchesFilesAndTheirAbbreviations() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(emptyTestFile));
         viewModel.addNewFile();
         viewModel.selectLastJournalFile();
-        assertEquals(1, viewModel.abbreviationsCountProperty().get());
+        Assert.assertEquals(1, viewModel.abbreviationsCountProperty().get());
 
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile1Entries));
         viewModel.addNewFile();
         viewModel.selectLastJournalFile();
-        assertEquals(2, viewModel.abbreviationsCountProperty().get());
+        Assert.assertEquals(2, viewModel.abbreviationsCountProperty().get());
     }
 
     @Test
-    void testOpenValidFileContainsTheSpecificEntryAndEnoughAbbreviations() throws Exception {
+    public void testOpenValidFileContainsTheSpecificEntryAndEnoughAbbreviations() throws Exception {
         Abbreviation testAbbreviation = new Abbreviation("Test Entry", "TE");
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile3Entries));
         viewModel.addNewFile();
         viewModel.selectLastJournalFile();
 
-        assertEquals(1, viewModel.journalFilesProperty().size());
+        Assert.assertEquals(1, viewModel.journalFilesProperty().size());
         // our test file has 3 abbreviations and one pseudo abbreviation
-        assertEquals(4, viewModel.abbreviationsProperty().size());
-        assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
+        Assert.assertEquals(4, viewModel.abbreviationsProperty().size());
+        Assert.assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
     }
 
     @Test
-    void testRemoveLastListSetsCurrentFileAndCurrentAbbreviationToNull() throws Exception {
+    public void testRemoveLastListSetsCurrentFileAndCurrentAbbreviationToNull() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile1Entries));
         viewModel.addNewFile();
         viewModel.removeCurrentFile();
 
-        assertEquals(0, viewModel.journalFilesProperty().size());
-        assertEquals(0, viewModel.abbreviationsProperty().size());
-        assertNull(viewModel.currentFileProperty().get());
-        assertNull(viewModel.currentAbbreviationProperty().get());
+        Assert.assertEquals(0, viewModel.journalFilesProperty().size());
+        Assert.assertEquals(0, viewModel.abbreviationsProperty().size());
+        Assert.assertNull(viewModel.currentFileProperty().get());
+        Assert.assertNull(viewModel.currentAbbreviationProperty().get());
     }
 
     @Test
-    void testMixedFileUsage() throws Exception {
+    public void testMixedFileUsage() throws Exception {
         Abbreviation testAbbreviation = new Abbreviation("Entry", "E");
         Abbreviation testAbbreviation2 = new Abbreviation("EntryEntry", "EE");
 
@@ -170,11 +174,11 @@ class ManageJournalAbbreviationsViewModelTest {
         viewModel.currentFileProperty().set(viewModel.journalFilesProperty().get(1));
 
         // size of the list of journal files should be incremented by two
-        assertEquals(2, viewModel.journalFilesProperty().size());
+        Assert.assertEquals(2, viewModel.journalFilesProperty().size());
         // our second test file has 4 abbreviations
-        assertEquals(5, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(5, viewModel.abbreviationsProperty().size());
         // check some abbreviation
-        assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
+        Assert.assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
 
         // simulate add new file button
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(emptyTestFile));
@@ -182,9 +186,9 @@ class ManageJournalAbbreviationsViewModelTest {
         viewModel.currentFileProperty().set(viewModel.journalFilesProperty().get(2));
 
         // size of the list of journal files should be incremented by one
-        assertEquals(3, viewModel.journalFilesProperty().size());
+        Assert.assertEquals(3, viewModel.journalFilesProperty().size());
         // a new file has zero abbreviations
-        assertEquals(1, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(1, viewModel.abbreviationsProperty().size());
 
         // simulate open file button
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile5EntriesWithDuplicate));
@@ -192,18 +196,18 @@ class ManageJournalAbbreviationsViewModelTest {
         viewModel.currentFileProperty().set(viewModel.journalFilesProperty().get(3));
 
         // size of the list of journal files should be incremented by one
-        assertEquals(4, viewModel.journalFilesProperty().size());
+        Assert.assertEquals(4, viewModel.journalFilesProperty().size());
 
-        assertEquals(5, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(5, viewModel.abbreviationsProperty().size());
         // check some abbreviation
-        assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation2)));
+        Assert.assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation2)));
     }
 
     @Test
-    void testBuiltInListsIncludeAllBuiltInAbbreviations() {
+    public void testBuiltInListsIncludeAllBuiltInAbbreviations() {
         when(abbreviationPreferences.useIEEEAbbreviations()).thenReturn(false);
         viewModel.addBuiltInLists();
-        assertEquals(2, viewModel.journalFilesProperty().getSize());
+        Assert.assertEquals(2, viewModel.journalFilesProperty().getSize());
         viewModel.currentFileProperty().set(viewModel.journalFilesProperty().get(0));
         ObservableList<Abbreviation> expected = FXCollections
                 .observableArrayList(JournalAbbreviationLoader.getBuiltInAbbreviations());
@@ -211,26 +215,26 @@ class ManageJournalAbbreviationsViewModelTest {
                 .observableArrayList(viewModel.abbreviationsProperty().stream()
                         .map(AbbreviationViewModel::getAbbreviationObject).collect(Collectors.toList()));
 
-        assertEquals(expected, actualAbbreviations);
+        Assert.assertEquals(expected, actualAbbreviations);
     }
 
     @Test
-    void testBuiltInListsStandardIEEEIncludesAllBuiltIEEEAbbreviations() throws Exception {
+    public void testBuiltInListsStandardIEEEIncludesAllBuiltIEEEAbbreviations() throws Exception {
         when(abbreviationPreferences.useIEEEAbbreviations()).thenReturn(true);
         viewModel.addBuiltInLists();
         viewModel.selectLastJournalFile();
-        assertEquals(2, viewModel.journalFilesProperty().getSize());
+        Assert.assertEquals(2, viewModel.journalFilesProperty().getSize());
         ObservableList<Abbreviation> expected = FXCollections
                 .observableArrayList(JournalAbbreviationLoader.getOfficialIEEEAbbreviations());
         ObservableList<Abbreviation> actualAbbreviations = FXCollections
                 .observableArrayList(viewModel.abbreviationsProperty().stream()
                         .map(AbbreviationViewModel::getAbbreviationObject).collect(Collectors.toList()));
 
-        assertEquals(expected, actualAbbreviations);
+        Assert.assertEquals(expected, actualAbbreviations);
     }
 
     @Test
-    void testcurrentFilePropertyChangeActiveFile() throws Exception {
+    public void testcurrentFilePropertyChangeActiveFile() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile1Entries));
         viewModel.addNewFile();
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile3Entries));
@@ -246,25 +250,25 @@ class ManageJournalAbbreviationsViewModelTest {
         AbbreviationsFileViewModel test5 = viewModel.journalFilesProperty().get(3);
 
         // test if the last opened file is active, but duplicated entry has been removed
-        assertEquals(5, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(5, viewModel.abbreviationsProperty().size());
 
         viewModel.currentFileProperty().set(test1);
 
         // test if the current abbreviations matches with the ones in testFile1Entries
-        assertEquals(2, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(2, viewModel.abbreviationsProperty().size());
 
         viewModel.currentFileProperty().set(test3);
-        assertEquals(4, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(4, viewModel.abbreviationsProperty().size());
         viewModel.currentFileProperty().set(test1);
-        assertEquals(2, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(2, viewModel.abbreviationsProperty().size());
         viewModel.currentFileProperty().set(test4);
-        assertEquals(5, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(5, viewModel.abbreviationsProperty().size());
         viewModel.currentFileProperty().set(test5);
-        assertEquals(5, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(5, viewModel.abbreviationsProperty().size());
     }
 
     @Test
-    void testAddAbbreviationIncludesAbbreviationsInAbbreviationList() throws Exception {
+    public void testAddAbbreviationIncludesAbbreviationsInAbbreviationList() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile4Entries));
         viewModel.addNewFile();
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile5EntriesWithDuplicate));
@@ -273,12 +277,12 @@ class ManageJournalAbbreviationsViewModelTest {
         Abbreviation testAbbreviation = new Abbreviation("YetAnotherEntry", "YAE");
         addAbbrevaition(testAbbreviation);
 
-        assertEquals(6, viewModel.abbreviationsProperty().size());
-        assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
+        Assert.assertEquals(6, viewModel.abbreviationsProperty().size());
+        Assert.assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
     }
 
     @Test
-    void testAddDuplicatedAbbreviationResultsInException() throws JabRefException {
+    public void testAddDuplicatedAbbreviationResultsInException() throws JabRefException {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile3Entries));
         viewModel.addNewFile();
         viewModel.selectLastJournalFile();
@@ -288,7 +292,7 @@ class ManageJournalAbbreviationsViewModelTest {
     }
 
     @Test
-    void testEditSameAbbreviationWithNoChangeDoesNotResultInException() throws Exception {
+    public void testEditSameAbbreviationWithNoChangeDoesNotResultInException() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(emptyTestFile));
         viewModel.addNewFile();
         viewModel.selectLastJournalFile();
@@ -296,11 +300,11 @@ class ManageJournalAbbreviationsViewModelTest {
         addAbbrevaition(testAbbreviation);
         editAbbreviation(testAbbreviation);
 
-        assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
+        Assert.assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
     }
 
     @Test
-    void testEditAbbreviationIncludesNewAbbreviationInAbbreviationsList() throws Exception {
+    public void testEditAbbreviationIncludesNewAbbreviationInAbbreviationsList() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile4Entries));
         viewModel.addNewFile();
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile5EntriesWithDuplicate));
@@ -310,26 +314,26 @@ class ManageJournalAbbreviationsViewModelTest {
         Abbreviation testAbbreviation = new Abbreviation("YetAnotherEntry", "YAE");
         editAbbreviation(testAbbreviation);
 
-        assertEquals(5, viewModel.abbreviationsProperty().size());
-        assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
+        Assert.assertEquals(5, viewModel.abbreviationsProperty().size());
+        Assert.assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
 
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(emptyTestFile));
         viewModel.addNewFile();
         viewModel.selectLastJournalFile();
         editAbbreviation(testAbbreviation);
 
-        assertEquals(1, viewModel.abbreviationsProperty().size());
-        assertFalse(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
+        Assert.assertEquals(1, viewModel.abbreviationsProperty().size());
+        Assert.assertFalse(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
     }
 
     @Test
-    void testEditAbbreviationToExistingOneResultsInException() throws Exception {
+    public void testEditAbbreviationToExistingOneResultsInException() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile3Entries));
         viewModel.addNewFile();
         viewModel.selectLastJournalFile();
         selectLastAbbreviation();
 
-        assertEquals(4, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(4, viewModel.abbreviationsProperty().size());
 
         viewModel.editAbbreviation("YetAnotherEntry", "YAE");
         viewModel.currentAbbreviationProperty().set(viewModel.abbreviationsProperty().get(2));
@@ -338,33 +342,33 @@ class ManageJournalAbbreviationsViewModelTest {
     }
 
     @Test
-    void testEditAbbreviationToEmptyNameResultsInException() throws Exception {
+    public void testEditAbbreviationToEmptyNameResultsInException() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile3Entries));
         viewModel.addNewFile();
         viewModel.selectLastJournalFile();
         selectLastAbbreviation();
 
-        assertEquals(4, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(4, viewModel.abbreviationsProperty().size());
 
         viewModel.editAbbreviation("", "YAE");
         verify(dialogService).showErrorDialogAndWait(anyString());
     }
 
     @Test
-    void testEditAbbreviationToEmptyAbbreviationResultsInException() throws Exception {
+    public void testEditAbbreviationToEmptyAbbreviationResultsInException() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile3Entries));
         viewModel.addNewFile();
         viewModel.selectLastJournalFile();
         selectLastAbbreviation();
 
-        assertEquals(4, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(4, viewModel.abbreviationsProperty().size());
 
         viewModel.editAbbreviation("YetAnotherEntry", "");
         verify(dialogService).showErrorDialogAndWait(anyString());
     }
 
     @Test
-    void testDeleteAbbreviationSelectsPreviousOne() throws Exception {
+    public void testDeleteAbbreviationSelectsPreviousOne() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile4Entries));
         viewModel.addNewFile();
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile5EntriesWithDuplicate));
@@ -373,18 +377,18 @@ class ManageJournalAbbreviationsViewModelTest {
         Abbreviation testAbbreviation = new Abbreviation("YetAnotherEntry", "YAE");
         addAbbrevaition(testAbbreviation);
 
-        assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
-        assertEquals(new AbbreviationViewModel(testAbbreviation), viewModel.currentAbbreviationProperty().get());
+        Assert.assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
+        Assert.assertEquals(new AbbreviationViewModel(testAbbreviation), viewModel.currentAbbreviationProperty().get());
 
         viewModel.deleteAbbreviation();
 
-        assertEquals(5, viewModel.abbreviationsProperty().size());
+        Assert.assertEquals(5, viewModel.abbreviationsProperty().size());
         // check if the previous (the last) element is the current abbreviation
-        assertEquals(viewModel.currentAbbreviationProperty().get(), viewModel.abbreviationsProperty().get(4));
+        Assert.assertEquals(viewModel.currentAbbreviationProperty().get(), viewModel.abbreviationsProperty().get(4));
     }
 
     @Test
-    void testDeleteAbbreviationSelectsNextOne() throws Exception {
+    public void testDeleteAbbreviationSelectsNextOne() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile1Entries));
         viewModel.addNewFile();
         viewModel.selectLastJournalFile();
@@ -393,11 +397,11 @@ class ManageJournalAbbreviationsViewModelTest {
         viewModel.currentAbbreviationProperty().set(viewModel.abbreviationsProperty().get(1));
         viewModel.deleteAbbreviation();
 
-        assertEquals(new AbbreviationViewModel(testAbbreviation), viewModel.currentAbbreviationProperty().get());
+        Assert.assertEquals(new AbbreviationViewModel(testAbbreviation), viewModel.currentAbbreviationProperty().get());
     }
 
     @Test
-    void testSaveAbbreviationsToFilesCreatesNewFilesWithWrittenAbbreviations() throws Exception {
+    public void testSaveAbbreviationsToFilesCreatesNewFilesWithWrittenAbbreviations() throws Exception {
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile4Entries));
         viewModel.addNewFile();
         viewModel.selectLastJournalFile();
@@ -405,8 +409,8 @@ class ManageJournalAbbreviationsViewModelTest {
         Abbreviation testAbbreviation = new Abbreviation("JabRefTestEntry", "JTE");
         editAbbreviation(testAbbreviation);
 
-        assertEquals(5, viewModel.abbreviationsProperty().size());
-        assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
+        Assert.assertEquals(5, viewModel.abbreviationsProperty().size());
+        Assert.assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation)));
 
         when(dialogService.showFileSaveDialog(any())).thenReturn(Optional.of(testFile5EntriesWithDuplicate));
         viewModel.addNewFile();
@@ -416,41 +420,37 @@ class ManageJournalAbbreviationsViewModelTest {
         Abbreviation testAbbreviation1 = new Abbreviation("SomeOtherEntry", "SOE");
         addAbbrevaition(testAbbreviation1);
 
-        assertEquals(5, viewModel.abbreviationsProperty().size());
-        assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation1)));
+        Assert.assertEquals(5, viewModel.abbreviationsProperty().size());
+        Assert.assertTrue(viewModel.abbreviationsProperty().contains(new AbbreviationViewModel(testAbbreviation1)));
 
         viewModel.saveJournalAbbreviationFiles();
-        List<String> expected = Arrays.asList(
-                "Abbreviations = Abb",
-                "Test Entry = TE",
-                "MoreEntries = ME",
-                "JabRefTestEntry = JTE");
-        List<String> actual = Files.readAllLines(testFile4Entries, StandardCharsets.UTF_8);
+        String expected = "Abbreviations = Abb" + NEWLINE + "Test Entry = TE" + NEWLINE + "MoreEntries = ME" + NEWLINE
+                + "JabRefTestEntry = JTE" + NEWLINE + "";
+        String actual = Files.contentOf(testFile4Entries.toFile(), StandardCharsets.UTF_8);
 
-        assertEquals(expected, actual);
+        Assert.assertEquals(expected, actual);
 
-        expected = Arrays.asList(
-                "EntryEntry = EE",
-                "Abbreviations = Abb",
-                "Test Entry = TE",
-                "SomeOtherEntry = SOE");
-        actual = Files.readAllLines(testFile5EntriesWithDuplicate, StandardCharsets.UTF_8);
+        expected = "EntryEntry = EE" + NEWLINE + "Abbreviations = Abb" + NEWLINE + "Test Entry = TE" + NEWLINE
+                + "SomeOtherEntry = SOE" + NEWLINE + "";
+        actual = Files.contentOf(testFile5EntriesWithDuplicate.toFile(), StandardCharsets.UTF_8);
 
-        assertEquals(expected, actual);
+        Assert.assertEquals(expected, actual);
     }
 
     @Test
-    void testSaveExternalFilesListToPreferences() throws Exception {
+    public void testSaveExternalFilesListToPreferences() throws Exception {
         addFourTestFileToViewModelAndPreferences();
         List<String> expected = Stream.of(testFile1Entries, testFile3Entries, testFile4Entries, testFile5EntriesWithDuplicate)
                 .map(Path::toString).collect(Collectors.toList());
         verify(abbreviationPreferences).setExternalJournalLists(expected);
     }
 
-    private Path createTestFile(Path folder, String name, String content) throws Exception {
-        Path file = folder.resolve(name);
-        Files.write(file, content.getBytes(StandardCharsets.UTF_8));
-        return file;
+    private Path createTemporaryTestFile(String name, String content) throws Exception {
+        File testFile = tempFolder.newFile(name);
+        try (OutputStream outputStream = new FileOutputStream(testFile)) {
+            outputStream.write(content.getBytes(StandardCharsets.UTF_8));
+        }
+        return testFile.toPath();
     }
 
     private void addAbbrevaition(Abbreviation testAbbreviation) throws Exception {

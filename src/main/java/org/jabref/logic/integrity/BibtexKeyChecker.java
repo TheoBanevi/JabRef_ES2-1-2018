@@ -24,6 +24,17 @@ public class BibtexKeyChecker implements Checker {
             return Collections.emptyList();
         }
 
+        String auxString = title.toString();
+        String arr[] = auxString.split(" ", 2);
+
+        String bibtexKey = author.toString() + year.toString() + arr[0].toUpperCase();
+
+
+        if(!entry.toString().equals(bibtexKey)) {
+            return Collections.singletonList(new IntegrityMessage(
+                    Localization.lang("Wrong format."), entry, BibEntry.KEY_FIELD));
+        }
+
         if (StringUtil.isBlank(entry.getCiteKeyOptional())) {
             String authorTitleYear = entry.getAuthorTitleYear(100);
             return Collections.singletonList(new IntegrityMessage(

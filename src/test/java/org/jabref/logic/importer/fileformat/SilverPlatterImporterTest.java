@@ -5,7 +5,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.jabref.logic.importer.Importer;
-import org.jabref.logic.util.StandardFileType;
+import org.jabref.logic.util.FileType;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,7 +55,7 @@ public class SilverPlatterImporterTest {
 
     @Test
     public void testsGetExtensions() {
-        assertEquals(StandardFileType.SILVER_PLATTER, testImporter.getFileType());
+        assertEquals(FileType.SILVER_PLATTER, testImporter.getFileType());
     }
 
     @Test

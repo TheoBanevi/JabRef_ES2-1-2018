@@ -9,7 +9,7 @@ import org.jabref.model.entry.AuthorList;
 /**
  * Formatter normalizing a list of person names to the BibTeX format.
  */
-public class NormalizeNamesFormatter extends Formatter {
+public class NormalizeNamesFormatter implements Formatter {
 
     @Override
     public String getName() {
@@ -37,4 +37,5 @@ public class NormalizeNamesFormatter extends Formatter {
     public String getExampleInput() {
         return "Albert Einstein and Alan Turing";
     }
+
 }

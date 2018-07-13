@@ -14,52 +14,52 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class StringUtilTest {
+public class StringUtilTest {
 
     @Test
-    void StringUtilClassIsSmall() throws Exception {
+    public void StringUtilClassIsSmall() throws Exception {
         Path path = Paths.get("src", "main", "java", StringUtil.class.getName().replace('.', '/') + ".java");
         int lineCount = Files.readAllLines(path, StandardCharsets.UTF_8).size();
 
-        assertTrue(lineCount <= 725, "StringUtil increased in size to " + lineCount + ". "
+        assertTrue(lineCount <= 722, "StringUtil increased in size. "
                 + "We try to keep this class as small as possible. "
                 + "Thus think twice if you add something to StringUtil.");
     }
 
     @Test
-    void testBooleanToBinaryString() {
+    public void testBooleanToBinaryString() {
         assertEquals("0", StringUtil.booleanToBinaryString(false));
         assertEquals("1", StringUtil.booleanToBinaryString(true));
     }
 
     @Test
-    void testQuoteSimple() {
+    public void testQuoteSimple() {
         assertEquals("a::", StringUtil.quote("a:", "", ':'));
     }
 
     @Test
-    void testQuoteNullQuotation() {
+    public void testQuoteNullQuotation() {
         assertEquals("a::", StringUtil.quote("a:", null, ':'));
     }
 
     @Test
-    void testQuoteNullString() {
+    public void testQuoteNullString() {
         assertEquals("", StringUtil.quote(null, ";", ':'));
     }
 
     @Test
-    void testQuoteQuotationCharacter() {
+    public void testQuoteQuotationCharacter() {
         assertEquals("a:::;", StringUtil.quote("a:;", ";", ':'));
     }
 
     @Test
-    void testQuoteMoreComplicated() {
+    public void testQuoteMoreComplicated() {
         assertEquals("a::b:%c:;", StringUtil.quote("a:b%c;", "%;", ':'));
     }
 
 
     @Test
-    void testUnifyLineBreaks() {
+    public void testUnifyLineBreaks() {
         // Mac < v9
         String result = StringUtil.unifyLineBreaks("\r", "newline");
         assertEquals("newline", result);
@@ -72,7 +72,7 @@ class StringUtilTest {
     }
 
     @Test
-    void testGetCorrectFileName() {
+    public void testGetCorrectFileName() {
         assertEquals("aa.bib", StringUtil.getCorrectFileName("aa", "bib"));
         assertEquals(".login.bib", StringUtil.getCorrectFileName(".login", "bib"));
         assertEquals("a.bib", StringUtil.getCorrectFileName("a.bib", "bib"));
@@ -83,13 +83,13 @@ class StringUtilTest {
     }
 
     @Test
-    void testQuoteForHTML() {
+    public void testQuoteForHTML() {
         assertEquals("&#33;", StringUtil.quoteForHTML("!"));
         assertEquals("&#33;&#33;&#33;", StringUtil.quoteForHTML("!!!"));
     }
 
     @Test
-    void testRemoveBracesAroundCapitals() {
+    public void testRemoveBracesAroundCapitals() {
         assertEquals("ABC", StringUtil.removeBracesAroundCapitals("{ABC}"));
         assertEquals("ABC", StringUtil.removeBracesAroundCapitals("{{ABC}}"));
         assertEquals("{abc}", StringUtil.removeBracesAroundCapitals("{abc}"));
@@ -97,7 +97,7 @@ class StringUtilTest {
     }
 
     @Test
-    void testPutBracesAroundCapitals() {
+    public void testPutBracesAroundCapitals() {
         assertEquals("{ABC}", StringUtil.putBracesAroundCapitals("ABC"));
         assertEquals("{ABC}", StringUtil.putBracesAroundCapitals("{ABC}"));
         assertEquals("abc", StringUtil.putBracesAroundCapitals("abc"));
@@ -106,7 +106,7 @@ class StringUtilTest {
     }
 
     @Test
-    void testShaveString() {
+    public void testShaveString() {
 
         assertEquals("", StringUtil.shaveString(null));
         assertEquals("", StringUtil.shaveString(""));
@@ -119,7 +119,7 @@ class StringUtilTest {
     }
 
     @Test
-    void testJoin() {
+    public void testJoin() {
         String[] s = "ab/cd/ed".split("/");
         assertEquals("ab\\cd\\ed", StringUtil.join(s, "\\", 0, s.length));
 
@@ -133,7 +133,7 @@ class StringUtilTest {
     }
 
     @Test
-    void testStripBrackets() {
+    public void testStripBrackets() {
         assertEquals("foo", StringUtil.stripBrackets("[foo]"));
         assertEquals("[foo]", StringUtil.stripBrackets("[[foo]]"));
         assertEquals("", StringUtil.stripBrackets(""));
@@ -145,17 +145,17 @@ class StringUtilTest {
     }
 
     @Test
-    void testGetPart() {
+    public void testGetPart() {
         // Should be added
     }
 
     @Test
-    void testFindEncodingsForString() {
+    public void testFindEncodingsForString() {
         // Unused in JabRef, but should be added in case it finds some use
     }
 
     @Test
-    void testWrap() {
+    public void testWrap() {
         String newline = "newline";
         assertEquals("aaaaa" + newline + "\tbbbbb" + newline + "\tccccc",
                 StringUtil.wrap("aaaaa bbbbb ccccc", 5, newline));
@@ -172,7 +172,7 @@ class StringUtilTest {
     }
 
     @Test
-    void testDecodeStringDoubleArray() {
+    public void testDecodeStringDoubleArray() {
         assertArrayEquals(new String[][]{{"a", "b"}, {"c", "d"}}, StringUtil.decodeStringDoubleArray("a:b;c:d"));
         assertArrayEquals(new String[][]{{"a", ""}, {"c", "d"}}, StringUtil.decodeStringDoubleArray("a:;c:d"));
         // arrays first differed at element [0][1]; expected: null<null> but was: java.lang.String<null>
@@ -181,7 +181,7 @@ class StringUtilTest {
     }
 
     @Test
-    void testIsInCurlyBrackets() {
+    public void testIsInCurlyBrackets() {
         assertFalse(StringUtil.isInCurlyBrackets(""));
         assertFalse(StringUtil.isInCurlyBrackets(null));
         assertTrue(StringUtil.isInCurlyBrackets("{}"));
@@ -196,7 +196,7 @@ class StringUtilTest {
     }
 
     @Test
-    void testIsInSquareBrackets() {
+    public void testIsInSquareBrackets() {
         assertFalse(StringUtil.isInSquareBrackets(""));
         assertFalse(StringUtil.isInSquareBrackets(null));
         assertTrue(StringUtil.isInSquareBrackets("[]"));
@@ -207,7 +207,7 @@ class StringUtilTest {
     }
 
     @Test
-    void testIsInCitationMarks() {
+    public void testIsInCitationMarks() {
         assertFalse(StringUtil.isInCitationMarks(""));
         assertFalse(StringUtil.isInCitationMarks(null));
         assertTrue(StringUtil.isInCitationMarks("\"\""));
@@ -217,129 +217,129 @@ class StringUtilTest {
     }
 
     @Test
-    void testIntValueOfSingleDigit() {
+    public void testIntValueOfSingleDigit() {
         assertEquals(1, StringUtil.intValueOf("1"));
         assertEquals(2, StringUtil.intValueOf("2"));
         assertEquals(8, StringUtil.intValueOf("8"));
     }
 
     @Test
-    void testIntValueOfLongString() {
+    public void testIntValueOfLongString() {
         assertEquals(1234567890, StringUtil.intValueOf("1234567890"));
     }
 
     @Test
-    void testIntValueOfStartWithZeros() {
+    public void testIntValueOfStartWithZeros() {
         assertEquals(1234, StringUtil.intValueOf("001234"));
     }
 
     @Test
-    void testIntValueOfExceptionIfStringContainsLetter() {
+    public void testIntValueOfExceptionIfStringContainsLetter() {
         assertThrows(NumberFormatException.class, () -> StringUtil.intValueOf("12A2"));
     }
 
     @Test
-    void testIntValueOfExceptionIfStringNull() {
+    public void testIntValueOfExceptionIfStringNull() {
         assertThrows(NumberFormatException.class, () -> StringUtil.intValueOf(null));
     }
 
     @Test
-    void testIntValueOfExceptionfIfStringEmpty() {
+    public void testIntValueOfExceptionfIfStringEmpty() {
         assertThrows(NumberFormatException.class, () -> StringUtil.intValueOf(""));
     }
 
     @Test
-    void testIntValueOfWithNullSingleDigit() {
-        assertEquals(Optional.of(1), StringUtil.intValueOfOptional("1"));
-        assertEquals(Optional.of(2), StringUtil.intValueOfOptional("2"));
-        assertEquals(Optional.of(8), StringUtil.intValueOfOptional("8"));
+    public void testIntValueOfWithNullSingleDigit() {
+        assertEquals(Optional.of(Integer.valueOf(1)), StringUtil.intValueOfOptional("1"));
+        assertEquals(Optional.of(Integer.valueOf(2)), StringUtil.intValueOfOptional("2"));
+        assertEquals(Optional.of(Integer.valueOf(8)), StringUtil.intValueOfOptional("8"));
     }
 
     @Test
-    void testIntValueOfWithNullLongString() {
-        assertEquals(Optional.of(1234567890), StringUtil.intValueOfOptional("1234567890"));
+    public void testIntValueOfWithNullLongString() {
+        assertEquals(Optional.of(Integer.valueOf(1234567890)), StringUtil.intValueOfOptional("1234567890"));
     }
 
     @Test
-    void testIntValueOfWithNullStartWithZeros() {
-        assertEquals(Optional.of(1234), StringUtil.intValueOfOptional("001234"));
+    public void testIntValueOfWithNullStartWithZeros() {
+        assertEquals(Optional.of(Integer.valueOf(1234)), StringUtil.intValueOfOptional("001234"));
     }
 
     @Test
-    void testIntValueOfWithNullExceptionIfStringContainsLetter() {
+    public void testIntValueOfWithNullExceptionIfStringContainsLetter() {
         assertEquals(Optional.empty(), StringUtil.intValueOfOptional("12A2"));
     }
 
     @Test
-    void testIntValueOfWithNullExceptionIfStringNull() {
+    public void testIntValueOfWithNullExceptionIfStringNull() {
         assertEquals(Optional.empty(), StringUtil.intValueOfOptional(null));
     }
 
     @Test
-    void testIntValueOfWithNullExceptionfIfStringEmpty() {
+    public void testIntValueOfWithNullExceptionfIfStringEmpty() {
         assertEquals(Optional.empty(), StringUtil.intValueOfOptional(""));
     }
 
     @Test
-    void testLimitStringLengthShort() {
+    public void testLimitStringLengthShort() {
         assertEquals("Test", StringUtil.limitStringLength("Test", 20));
     }
 
     @Test
-    void testLimitStringLengthLimiting() {
+    public void testLimitStringLengthLimiting() {
         assertEquals("TestTes...", StringUtil.limitStringLength("TestTestTestTestTest", 10));
         assertEquals(10, StringUtil.limitStringLength("TestTestTestTestTest", 10).length());
     }
 
     @Test
-    void testLimitStringLengthNullInput() {
+    public void testLimitStringLengthNullInput() {
         assertEquals("", StringUtil.limitStringLength(null, 10));
     }
 
     @Test
-    void testReplaceSpecialCharacters() {
+    public void testReplaceSpecialCharacters() {
         assertEquals("Hallo Arger", StringUtil.replaceSpecialCharacters("Hallo Arger"));
         assertEquals("aaAeoeeee", StringUtil.replaceSpecialCharacters("åÄöéèë"));
     }
 
     @Test
-    void testRepeatSpaces() {
+    public void testRepeatSpaces() {
         assertEquals("", StringUtil.repeatSpaces(0));
         assertEquals(" ", StringUtil.repeatSpaces(1));
         assertEquals("       ", StringUtil.repeatSpaces(7));
     }
 
     @Test
-    void testRepeat() {
+    public void testRepeat() {
         assertEquals("", StringUtil.repeat(0, 'a'));
         assertEquals("a", StringUtil.repeat(1, 'a'));
         assertEquals("aaaaaaa", StringUtil.repeat(7, 'a'));
     }
 
     @Test
-    void testBoldHTML() {
+    public void testBoldHTML() {
         assertEquals("<b>AA</b>", StringUtil.boldHTML("AA"));
     }
 
     @Test
-    void testBoldHTMLReturnsOriginalTextIfNonNull() {
+    public void testBoldHTMLReturnsOriginalTextIfNonNull() {
         assertEquals("<b>AA</b>", StringUtil.boldHTML("AA", "BB"));
     }
 
     @Test
-    void testBoldHTMLReturnsAlternativeTextIfNull() {
+    public void testBoldHTMLReturnsAlternativeTextIfNull() {
         assertEquals("<b>BB</b>", StringUtil.boldHTML(null, "BB"));
     }
 
     @Test
-    void testUnquote() {
+    public void testUnquote() {
         assertEquals("a:", StringUtil.unquote("a::", ':'));
         assertEquals("a:;", StringUtil.unquote("a:::;", ':'));
         assertEquals("a:b%c;", StringUtil.unquote("a::b:%c:;", ':'));
     }
 
     @Test
-    void testCapitalizeFirst() {
+    public void testCapitalizeFirst() {
         assertEquals("", StringUtil.capitalizeFirst(""));
         assertEquals("Hello world", StringUtil.capitalizeFirst("Hello World"));
         assertEquals("A", StringUtil.capitalizeFirst("a"));

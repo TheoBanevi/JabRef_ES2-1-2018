@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.jabref.model.entry.BibEntry;
 import org.jabref.model.entry.FieldName;
-import org.jabref.model.entry.LinkedFile;
 import org.jabref.model.entry.Month;
 
 import org.json.JSONArray;
@@ -182,9 +181,9 @@ public class JSONEntryParser {
 
         // Page numbers
         if (springerJsonEntry.has("startingPage") && !(springerJsonEntry.getString("startingPage").isEmpty())) {
-            if (springerJsonEntry.has("endingPage") && !(springerJsonEntry.getString("endingPage").isEmpty())) {
+            if (springerJsonEntry.has("endPage") && !(springerJsonEntry.getString("endPage").isEmpty())) {
                 entry.setField(FieldName.PAGES,
-                        springerJsonEntry.getString("startingPage") + "--" + springerJsonEntry.getString("endingPage"));
+                        springerJsonEntry.getString("startingPage") + "--" + springerJsonEntry.getString("endPage"));
             } else {
                 entry.setField(FieldName.PAGES, springerJsonEntry.getString("startingPage"));
             }
@@ -195,18 +194,13 @@ public class JSONEntryParser {
             entry.setField(nametype, springerJsonEntry.getString("publicationName"));
         }
 
-        // Online file
+        // URL
         if (springerJsonEntry.has("url")) {
-            JSONArray urls = springerJsonEntry.optJSONArray("url");
-            if (urls == null) {
+            JSONArray urlarray = springerJsonEntry.optJSONArray("url");
+            if (urlarray == null) {
                 entry.setField(FieldName.URL, springerJsonEntry.optString("url"));
             } else {
-                urls.forEach(data -> {
-                    JSONObject url = (JSONObject) data;
-                    if (url.optString("format").equalsIgnoreCase("pdf")) {
-                        entry.addFile(new LinkedFile("online", url.optString("value"), "PDF"));
-                    }
-                });
+                entry.setField(FieldName.URL, urlarray.getJSONObject(0).optString("value"));
             }
         }
 
